@@ -1,4 +1,4 @@
 # IntroMobile - ParQ - Groep 6
-## GitWiki
+### GitWiki
 + Planning
 + WireFrames - Figma
