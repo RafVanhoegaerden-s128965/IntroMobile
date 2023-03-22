@@ -1,4 +1,4 @@
-# IntroMobile - ParQ
+# IntroMobile - ParQ - Groep 6
 ## 22/3
 Questions:
 
