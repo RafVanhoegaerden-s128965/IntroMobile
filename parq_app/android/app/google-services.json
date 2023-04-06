@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "398811230978",
+    "project_id": "parq-app-flutter",
+    "storage_bucket": "parq-app-flutter.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:398811230978:android:898a7659ae0d6ede6dc81b",
+        "android_client_info": {
+          "package_name": "com.example.parq_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "398811230978-hsg6nbjo6e9jirkme74ahub7p1s7p9iq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDGL37fUhLl6WRTtauJKNDvOWL6fGT9dUY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "398811230978-hsg6nbjo6e9jirkme74ahub7p1s7p9iq.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "398811230978-nbng9r2hi91aqd8dtrm58ol9h5jhebdt.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.parqApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
