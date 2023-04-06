@@ -17,20 +17,22 @@ void main() {
 }
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({Key? key}) : super(key: key);
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
   late final TextEditingController _email;
   late final TextEditingController _password;
+  late final TextEditingController _confirmPassword;
 
   @override
   void initState() {
     _email = TextEditingController();
     _password = TextEditingController();
+    _confirmPassword = TextEditingController();
     super.initState();
   }
 
@@ -38,6 +40,7 @@ class _HomePageState extends State<HomePage> {
   void dispose() {
     _email.dispose();
     _password.dispose();
+    _confirmPassword.dispose();
     super.dispose();
   }
 
@@ -70,24 +73,41 @@ class _HomePageState extends State<HomePage> {
                     decoration: const InputDecoration(
                         hintText: 'Enter your password here'),
                   ),
+                  TextField(
+                    controller: _confirmPassword,
+                    obscureText: true,
+                    enableSuggestions: false,
+                    autocorrect: false,
+                    decoration: const InputDecoration(
+                        hintText: 'Confirm your password here'),
+                  ),
                   TextButton(
                     onPressed: () async {
                       final email = _email.text;
                       final password = _password.text;
+                      final confirmPassword = _confirmPassword.text;
 
-                      final userCredential = await FirebaseAuth.instance
-                          .createUserWithEmailAndPassword(
-                        email: email,
-                        password: password,
-                      );
-                      print(userCredential);
+                      if (password != confirmPassword) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Passwords do not match"),
+                          ),
+                        );
+                      } else {
+                        final userCredential = await FirebaseAuth.instance
+                            .createUserWithEmailAndPassword(
+                          email: email,
+                          password: password,
+                        );
+                        print(userCredential);
+                      }
                     },
                     child: const Text('Register'),
                   ),
                 ],
               );
             default:
-              return Text('Loading');
+              return const Text('Loading...');
           }
         },
       ),
