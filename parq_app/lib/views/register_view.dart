@@ -134,6 +134,10 @@ class _RegisterViewState extends State<RegisterView> {
                               email: email,
                               password: password,
                             );
+
+                            await userCredential.user
+                                ?.updateDisplayName(username);
+
                             print(userCredential);
                           } on FirebaseAuthException catch (e) {
                             if (e.code == 'weak-password') {
