@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:parq_app/parking_model.dart';
+import '../parking_model.dart';
 
 class MapPage extends StatefulWidget {
   final String? userId;
@@ -50,13 +50,11 @@ class _MapPageState extends State<MapPage> {
         children: [
           Text(parking.car.toString()),
           Text(time),
-          Center(
-            child: ElevatedButton(
-              onPressed: () {
-                // Hier kun je code toevoegen die wordt uitgevoerd wanneer de knop wordt ingedrukt
-              },
-              child: const Text('Park'),
-            ),
+          ElevatedButton(
+            onPressed: () {
+              // Hier kun je code toevoegen die wordt uitgevoerd wanneer de knop wordt ingedrukt
+            },
+            child: const Text('Park'),
           ),
         ],
       ),
