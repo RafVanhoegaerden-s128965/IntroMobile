@@ -20,11 +20,14 @@ class _MapPageState extends State<MapPage> {
   //Markers list
   List<Parking> _parkings = [];
   void _getValues() async {
+    //Connectie met Firebase
     final snapshot =
         await FirebaseFirestore.instance.collection('parkings').get();
 
+    //Lijst maken van alle documenten
     List<DocumentSnapshot> documents = snapshot.docs;
     List<Parking> parking = [];
+    //Itereren over elke document en mapen in parking
     for (var document in documents) {
       var data = document.data();
       parking.add(Parking.fromMap(data as Map<String, dynamic>));
@@ -36,12 +39,26 @@ class _MapPageState extends State<MapPage> {
   }
 
   //Methods
-  Widget _buildPopUp(BuildContext context) {
+  Widget _buildPopUp(BuildContext context, Parking parking) {
+    DateTime timeData = parking.time.toDate();
+    String time = "${timeData.hour}:${timeData.minute}";
     //TODO user database variables in this popup
     return AlertDialog(
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(parking.car.toString()),
+          Text(time),
+          Center(
+            child: ElevatedButton(
+              onPressed: () {
+                // Hier kun je code toevoegen die wordt uitgevoerd wanneer de knop wordt ingedrukt
+              },
+              child: const Text('Park'),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -90,20 +107,7 @@ class _MapPageState extends State<MapPage> {
                   height: 25,
                   builder: (context) => _arrowIcon,
                 ),
-                // Marker(
-                //     point: LatLng(51.2295, 4.4151),
-                //     width: 35,
-                //     height: 35,
-                //     builder: (context) => GestureDetector(
-                //           onTap: () {
-                //             showDialog(
-                //               context: context,
-                //               builder: (BuildContext context) =>
-                //                   _buildPopUp(context),
-                //             );
-                //           },
-                //           child: _parkIcon,
-                //         ))
+                //Parking markers op de map
                 ..._parkings.map((parking) => Marker(
                       point: LatLng(
                           double.parse(parking.lat), double.parse(parking.lng)),
@@ -114,7 +118,7 @@ class _MapPageState extends State<MapPage> {
                           showDialog(
                             context: context,
                             builder: (BuildContext context) =>
-                                _buildPopUp(context),
+                                _buildPopUp(context, parking),
                           );
                         },
                         child: _parkIcon,
