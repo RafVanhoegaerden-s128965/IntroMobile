@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:parq_app/parking_model.dart';
 
 class MapPage extends StatefulWidget {
   final String? userId;
@@ -16,10 +17,22 @@ class _MapPageState extends State<MapPage> {
   final _arrowIcon = Image.asset('assets/images/Arrow.png');
   final _parkIcon = Image.asset('assets/images/ParkSpace.png');
 
-  //TODO Database Refernces
+  //Markers list
+  List<Parking> _parkings = [];
   void _getValues() async {
     final snapshot =
         await FirebaseFirestore.instance.collection('parkings').get();
+
+    List<DocumentSnapshot> documents = snapshot.docs;
+    List<Parking> parking = [];
+    for (var document in documents) {
+      var data = document.data();
+      parking.add(Parking.fromMap(data as Map<String, dynamic>));
+    }
+    setState(() {
+      _parkings = parking;
+      print(_parkings.length);
+    });
   }
 
   //Methods
@@ -31,6 +44,12 @@ class _MapPageState extends State<MapPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
       ),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _getValues();
   }
 
   @override
@@ -71,20 +90,36 @@ class _MapPageState extends State<MapPage> {
                   height: 25,
                   builder: (context) => _arrowIcon,
                 ),
-                Marker(
-                    point: LatLng(51.2295, 4.4151),
-                    width: 35,
-                    height: 35,
-                    builder: (context) => GestureDetector(
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) =>
-                                  _buildPopUp(context),
-                            );
-                          },
-                          child: _parkIcon,
-                        ))
+                // Marker(
+                //     point: LatLng(51.2295, 4.4151),
+                //     width: 35,
+                //     height: 35,
+                //     builder: (context) => GestureDetector(
+                //           onTap: () {
+                //             showDialog(
+                //               context: context,
+                //               builder: (BuildContext context) =>
+                //                   _buildPopUp(context),
+                //             );
+                //           },
+                //           child: _parkIcon,
+                //         ))
+                ..._parkings.map((parking) => Marker(
+                      point: LatLng(
+                          double.parse(parking.lat), double.parse(parking.lng)),
+                      width: 35,
+                      height: 35,
+                      builder: (context) => GestureDetector(
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) =>
+                                _buildPopUp(context),
+                          );
+                        },
+                        child: _parkIcon,
+                      ),
+                    )),
               ],
             ),
           ],
