@@ -4,7 +4,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 class MapPage extends StatefulWidget {
-  const MapPage({super.key});
+  final String? userId;
+  const MapPage({super.key, this.userId});
 
   @override
   State<MapPage> createState() => _MapPageState();

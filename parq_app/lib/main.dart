@@ -5,7 +5,6 @@ import 'package:parq_app/views/map_view.dart';
 import 'package:parq_app/views/register_view.dart';
 import 'package:parq_app/views/settings_view.dart';
 import 'package:parq_app/views/ticket_view.dart';
-
 import 'constants/routes.dart';
 
 void main() async {
@@ -34,7 +33,9 @@ class MyApp extends StatelessWidget {
 }
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final String userId;
+
+  const HomePage({required Key key, required this.userId}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -43,11 +44,18 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   //Routing list + Index
   int _currentIndex = 1;
-  static const List<Widget> _routingOptions = [
-    TicketPage(),
-    MapPage(), //HomePage
-    SettingsPage()
-  ];
+  List<Widget> _routingOptions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _routingOptions = [
+      TicketPage(),
+      MapPage(),
+      SettingsPage(userId: widget.userId),
+    ];
+  }
+
   //Icons
   final _ticketIcon = Image.asset(
     'assets/images/Ticket.png',
@@ -98,6 +106,14 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+    );
+  }
+
+  void _navigateToSettingsPage(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => SettingsPage(userId: widget.userId)),
     );
   }
 }
