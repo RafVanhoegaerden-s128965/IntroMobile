@@ -34,7 +34,6 @@ class MyApp extends StatelessWidget {
 
 class HomePage extends StatefulWidget {
   final String userId;
-
   const HomePage({required Key key, required this.userId}) : super(key: key);
 
   @override
@@ -109,6 +108,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  //Unused
   void _navigateToSettingsPage(BuildContext context) {
     Navigator.push(
       context,
