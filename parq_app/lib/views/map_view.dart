@@ -1,13 +1,11 @@
 import 'dart:developer';
 import 'dart:math' as math;
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/parking_model.dart';
-//import 'package:flutter/rendering.dart';
-//import 'package:geolocator/geolocator.dart';
+import 'package:geolocator/geolocator.dart';
 
 class MapPage extends StatefulWidget {
   final String? userId;
@@ -26,18 +24,18 @@ class _MapPageState extends State<MapPage> {
 
   //Markers list
   List<Parking> _parkings = [];
-  // double _latitude = 0;
-  // double _longitude = 0;
+  double _latitude = 0;
+  double _longitude = 0;
 
-  //Get user location
-  // Future<void> _getCurrentLocation() async {
-  //   Position position = await Geolocator.getCurrentPosition(
-  //       desiredAccuracy: LocationAccuracy.high);
-  //   setState(() {
-  //     _latitude = position.latitude;
-  //     _longitude = position.longitude;
-  //   });
-  // }
+  // Get user location
+  Future<void> _getCurrentLocation() async {
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+    setState(() {
+      _latitude = position.latitude;
+      _longitude = position.longitude;
+    });
+  }
 
   //Get database values
   void _getValues() async {
