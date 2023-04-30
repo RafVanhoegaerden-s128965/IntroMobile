@@ -1,23 +1,63 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 
-class CarsView extends StatefulWidget {
-  const CarsView({super.key});
+class CarPage extends StatefulWidget {
+  final String? userId;
+  const CarPage({super.key, this.userId});
 
   @override
-  State<CarsView> createState() => _CarsViewState();
+  State<CarPage> createState() => _CarPageState();
 }
 
-class _CarsViewState extends State<CarsView> {
+//BottomNavBar verdwijnt bij deze pagina
+class _CarPageState extends State<CarPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage cars'),
+        title: const Text(
+          'Cars',
+        ),
         leading: IconButton(
           onPressed: () => Navigator.of(context).pop(),
           icon: const Icon(Icons.arrow_back),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Column(
+          children: <Widget>[
+            //TODO: change car-variables
+            Card(
+              child: SizedBox(
+                  height: 150,
+                  width: 400,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('CarName'),
+                      Text('CarType'),
+                      Text('CarColor')
+                    ],
+                  )),
+            ),
+            const Divider(
+              thickness: 2,
+            ),
+            //TODO: change car-variables
+            Card(
+              child: SizedBox(
+                  height: 150,
+                  width: 400,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('CarName'),
+                      Text('CarType'),
+                      Text('CarColor')
+                    ],
+                  )),
+            ),
+          ],
         ),
       ),
     );

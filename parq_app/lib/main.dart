@@ -46,6 +46,8 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     //_getValues();
+
+    //BottomNavBar set routing list
     _routingOptions = [
       const TicketPage(),
       const MapPage(),
@@ -53,7 +55,7 @@ class _HomePageState extends State<HomePage> {
     ];
   }
 
-  //Routing list + Index
+  //BottomNavBar Routing list + Index
   int _currentIndex = 1;
   List<Widget> _routingOptions = [];
 
