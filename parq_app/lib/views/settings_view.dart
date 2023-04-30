@@ -4,6 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:parq_app/constants/routes.dart';
 import 'package:parq_app/models/user_model.dart';
+import 'package:parq_app/views/cars_view.dart';
+import 'package:parq_app/views/change_password_view.dart';
+import 'package:parq_app/views/edit_profile_view.dart';
 
 class SettingsPage extends StatefulWidget {
   final String? userId;
@@ -97,7 +100,11 @@ class _SettingsPageState extends State<SettingsPage> {
             ElevatedButton(
               onPressed: () {
                 // Navigeer naar een andere pagina
-                //Navigator.of(context).pushNamed();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const ChangePasswordView(),
+                  ),
+                );
               },
               child: const Text("Change password"),
             ),
@@ -105,7 +112,11 @@ class _SettingsPageState extends State<SettingsPage> {
             ElevatedButton(
               onPressed: () {
                 // Navigeer naar een andere pagina
-                //Navigator.of(context).pushNamed(routeTwo);
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const EditProfileView(),
+                  ),
+                );
               },
               child: const Text("Edit profile"),
             ),
@@ -113,7 +124,11 @@ class _SettingsPageState extends State<SettingsPage> {
             ElevatedButton(
               onPressed: () {
                 // Navigeer naar een andere pagina
-                //Navigator.of(context).pushNamed(routeThree);
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const CarsView(),
+                  ),
+                );
               },
               child: const Text("Manage cars"),
             ),
