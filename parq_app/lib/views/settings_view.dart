@@ -1,9 +1,47 @@
+import 'dart:developer';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:parq_app/constants/routes.dart';
+import 'package:parq_app/models/user_model.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   final String? userId;
   const SettingsPage({super.key, this.userId});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  User? _user;
+
+  @override
+  void initState() {
+    super.initState();
+    _getUser();
+  }
+
+  Future<void> _getUser() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('id', isEqualTo: widget.userId)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        final userDoc = snapshot.docs.first;
+        final userData = userDoc.data();
+        final user = User.fromMap(userData);
+        setState(() {
+          _user = user;
+        });
+      }
+    } catch (error) {
+      // Handel eventuele fouten af
+      log('Fout bij het ophalen van de gebruikersnaam: $error');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,13 +82,15 @@ class SettingsPage extends StatelessWidget {
           children: [
             const CircleAvatar(
               radius: 50,
-              child: Icon(Icons.person),
+              child: Icon(
+                Icons.person,
+                size: 50,
+              ),
             ),
             const SizedBox(height: 20),
-            // TODO: verander naar user.name.toString()
-            const Text(
-              'Naam user',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            Text(
+              _user?.username ?? "",
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -59,7 +99,7 @@ class SettingsPage extends StatelessWidget {
                 // Navigeer naar een andere pagina
                 //Navigator.of(context).pushNamed();
               },
-              child: const Text("Pagina 1"),
+              child: const Text("Change password"),
             ),
             const SizedBox(width: 20),
             ElevatedButton(
@@ -67,7 +107,7 @@ class SettingsPage extends StatelessWidget {
                 // Navigeer naar een andere pagina
                 //Navigator.of(context).pushNamed(routeTwo);
               },
-              child: const Text("Pagina 2"),
+              child: const Text("Edit profile"),
             ),
             const SizedBox(width: 20),
             ElevatedButton(
@@ -75,16 +115,16 @@ class SettingsPage extends StatelessWidget {
                 // Navigeer naar een andere pagina
                 //Navigator.of(context).pushNamed(routeThree);
               },
-              child: const Text("Pagina 3"),
+              child: const Text("Manage cars"),
             ),
             const SizedBox(height: 20),
-            TextButton(
+            ElevatedButton(
               onPressed: () {
                 // Navigeer naar de inlogpagina en verwijder alle eerdere routes uit de stapel.
                 Navigator.of(context)
                     .pushNamedAndRemoveUntil(loginRoute, (route) => false);
               },
-              child: const Text('Uitloggen'),
+              child: const Text('Logout'),
             ),
           ],
         ),
