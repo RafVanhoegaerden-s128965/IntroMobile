@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:parq_app/views/cars_view.dart';
 import 'package:parq_app/views/login_view.dart';
 import 'package:parq_app/views/map_view.dart';
 import 'package:parq_app/views/register_view.dart';
@@ -41,24 +42,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // late User _user;
-
-  // void _getValues() async {
-  //   final snapshot = await FirebaseFirestore.instance
-  //       .collection('users')
-  //       .where('userId', isEqualTo: widget.userId)
-  //       .get();
-
-  //   if (snapshot.docs.isNotEmpty) {
-  //     final userDoc = snapshot.docs.first;
-  //     final userData = userDoc.data();
-  //     final user = User.fromMap(userData);
-  //     setState(() {
-  //       _user = user;
-  //     });
-  //   }
-  // }
-
   @override
   void initState() {
     super.initState();
