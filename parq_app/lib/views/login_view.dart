@@ -1,13 +1,14 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
-import 'package:crypto/crypto.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:parq_app/main.dart';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crypto/crypto.dart';
+import 'package:flutter/material.dart';
+import 'package:parq_app/main.dart';
 import '../constants/routes.dart';
+import '../models/user_model.dart';
 
 class LoginView extends StatefulWidget {
-  const LoginView({super.key});
+  const LoginView({Key? key}) : super(key: key);
 
   @override
   State<LoginView> createState() => _LoginViewState();
@@ -18,7 +19,9 @@ class _LoginViewState extends State<LoginView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  void _login() async {
+  late User _loggedInUser;
+
+  Future<void> _login() async {
     final email = _emailController.text;
     final password = _passwordController.text;
 
@@ -32,12 +35,23 @@ class _LoginViewState extends State<LoginView> {
           .get();
 
       if (snapshot.docs.isNotEmpty) {
-        // Navigate to the home page.
-        Navigator.pushAndRemoveUntil(
+        final userDoc = snapshot.docs.first;
+        final userData = userDoc.data();
+        final user = User.fromMap(userData);
+        setState(() {
+          _loggedInUser = user;
+        });
+
+        Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
-          (route) => false,
+          MaterialPageRoute(
+            builder: (context) => HomePage(
+              userId: _loggedInUser.id,
+              key: UniqueKey(),
+            ),
+          ),
         );
+        // Navigate to the home page.
       } else {
         // Display a snackbar to indicate that login failed.
         ScaffoldMessenger.of(context).showSnackBar(
@@ -52,11 +66,11 @@ class _LoginViewState extends State<LoginView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
+        appBar: AppBar(
+          title: const Text('Login'),
+        ),
+        body: SingleChildScrollView(
+            child: Padding(
           padding: const EdgeInsets.all(16),
           child: Form(
             key: _formKey,
@@ -106,8 +120,6 @@ class _LoginViewState extends State<LoginView> {
               ],
             ),
           ),
-        ),
-      ),
-    );
+        )));
   }
 }
