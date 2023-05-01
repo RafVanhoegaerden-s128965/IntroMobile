@@ -42,7 +42,6 @@ class _LoginViewState extends State<LoginView> {
           _loggedInUser = user;
         });
 
-        // ignore: use_build_context_synchronously
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -55,7 +54,6 @@ class _LoginViewState extends State<LoginView> {
         // Navigate to the home page.
       } else {
         // Display a snackbar to indicate that login failed.
-        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Incorrect email or password.'),
