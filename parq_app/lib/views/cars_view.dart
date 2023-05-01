@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:parq_app/models/car_model.dart';
@@ -178,7 +177,10 @@ class _CarPageState extends State<CarPage> {
                                 onPressed: () {
                                   //TODO: edit dialog
                                 },
-                                icon: const Icon(Icons.edit),
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: Colors.blue,
+                                ),
                               ),
                               IconButton(
                                 onPressed: () {
@@ -206,7 +208,10 @@ class _CarPageState extends State<CarPage> {
                                         );
                                       });
                                 },
-                                icon: const Icon(Icons.delete),
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
                               )
                             ],
                           )
