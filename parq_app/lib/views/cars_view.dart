@@ -5,8 +5,9 @@ import 'package:parq_app/models/car_model.dart';
 import 'package:parq_app/models/user_model.dart';
 
 class CarPage extends StatefulWidget {
+  final Car? car;
   final User? user;
-  const CarPage({super.key, this.user});
+  const CarPage({super.key, this.user, this.car});
 
   @override
   State<CarPage> createState() => _CarPageState();
@@ -42,19 +43,7 @@ class _CarPageState extends State<CarPage> {
     });
   }
 
-  void _deleteCar(Car car) async {
-    QuerySnapshot snapshot = await FirebaseFirestore.instance
-        .collection('cars')
-        .where('id', isEqualTo: car.id)
-        .get();
-    if (snapshot.docs.isNotEmpty) {
-      await snapshot.docs.first.reference.delete();
-      setState(() {
-        _getValues();
-      });
-    }
-  }
-
+  //Add car
   void _addCar(Car car) async {
     //Gebruik bij het toevoegen bij de id van de car: 'id': FirebaseFirestore.instance.collection('car').doc().id,
     await FirebaseFirestore.instance.collection('cars').add(car.toMap());
@@ -133,6 +122,141 @@ class _CarPageState extends State<CarPage> {
         });
   }
 
+  //Edit car
+  Future<void> _editCar(Car car) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('cars')
+          .where('id', isEqualTo: car.id)
+          .get();
+      if (snapshot.docs.isNotEmpty) {
+        final docId = snapshot.docs.first.id;
+        await FirebaseFirestore.instance.collection('cars').doc(docId).update({
+          'name': car.name,
+          'type': car.type,
+          'color': car.color,
+        });
+        setState(() {
+          _getValues();
+        });
+      } else {
+        log('Car not found in database.');
+      }
+    } catch (e) {
+      log('Failed to update car: $e');
+    }
+  }
+
+  void _showEditCarDialog() {
+    TextEditingController nameController = TextEditingController();
+    TextEditingController typeController = TextEditingController();
+    TextEditingController colorController = TextEditingController();
+
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+              title: const Text('Edit car'),
+              content: SizedBox(
+                height: 150,
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        hintText: 'Name',
+                      ),
+                    ),
+                    TextField(
+                      controller: typeController,
+                      decoration: const InputDecoration(
+                        hintText: 'Type',
+                      ),
+                    ),
+                    TextField(
+                      controller: colorController,
+                      decoration: const InputDecoration(
+                        hintText: 'Color',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
+                  child: const Text('Edit'),
+                  onPressed: () {
+                    //New values
+                    String newName = nameController.text.trim();
+                    String newType = typeController.text.trim();
+                    String newColor = colorController.text.trim();
+
+                    if (newName.isNotEmpty &&
+                        newType.isNotEmpty &&
+                        newColor.isNotEmpty) {
+                      Car car = Car(
+                        //TODO: fix line 205: null check on null value
+                        id: widget.car!.id,
+                        userId: widget.user!.id,
+                        name: newName,
+                        type: newType,
+                        color: newColor,
+                      );
+                      _editCar(car);
+                      Navigator.of(context).pop();
+                    } else {
+                      log('Please enter values for all fields.');
+                    }
+                  },
+                ),
+              ]);
+        });
+  }
+
+  //Delete car
+  void _deleteCar(Car car) async {
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('cars')
+        .where('id', isEqualTo: car.id)
+        .get();
+    if (snapshot.docs.isNotEmpty) {
+      await snapshot.docs.first.reference.delete();
+      setState(() {
+        _getValues();
+      });
+    }
+  }
+
+  void _showDeleteCar(Car car) async {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Delete Car'),
+            content: Text('Are you sure you want to delete ${car.name}?'),
+            actions: [
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              TextButton(
+                child: const Text('Delete'),
+                onPressed: () {
+                  _deleteCar(car);
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -163,9 +287,7 @@ class _CarPageState extends State<CarPage> {
                           Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(
-                                car.name,
-                              ),
+                              Text(car.name),
                               Text(car.type),
                               Text(car.color),
                             ],
@@ -175,7 +297,7 @@ class _CarPageState extends State<CarPage> {
                             children: [
                               IconButton(
                                 onPressed: () {
-                                  //TODO: edit dialog
+                                  _showEditCarDialog();
                                 },
                                 icon: const Icon(
                                   Icons.edit,
@@ -184,29 +306,7 @@ class _CarPageState extends State<CarPage> {
                               ),
                               IconButton(
                                 onPressed: () {
-                                  showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return AlertDialog(
-                                          title: const Text('Delete Car'),
-                                          content: Text(
-                                              'Are you sure you want to delete ${car.name}?'),
-                                          actions: [
-                                            TextButton(
-                                              child: const Text('Cancel'),
-                                              onPressed: () =>
-                                                  Navigator.of(context).pop(),
-                                            ),
-                                            TextButton(
-                                              child: const Text('Delete'),
-                                              onPressed: () {
-                                                _deleteCar(car);
-                                                Navigator.of(context).pop();
-                                              },
-                                            ),
-                                          ],
-                                        );
-                                      });
+                                  _showDeleteCar(car);
                                 },
                                 icon: const Icon(
                                   Icons.delete,
@@ -219,9 +319,7 @@ class _CarPageState extends State<CarPage> {
                       ),
                     ),
                   ),
-                  const Divider(
-                    thickness: 2,
-                  ),
+                  if (index < _cars.length - 1) const Divider(thickness: 2)
                 ],
               );
             },
