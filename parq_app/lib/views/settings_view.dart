@@ -126,7 +126,9 @@ class _SettingsPageState extends State<SettingsPage> {
                 // Navigeer naar een andere pagina
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const CarPage(),
+                    builder: (context) => CarPage(
+                      user: _user,
+                    ),
                   ),
                 );
               },

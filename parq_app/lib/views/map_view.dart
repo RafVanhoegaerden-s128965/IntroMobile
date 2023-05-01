@@ -52,7 +52,7 @@ class _MapPageState extends State<MapPage> {
     }
     setState(() {
       _parkings = parking;
-      log("${_parkings.length}");
+      log("Parkings: ${_parkings.length}");
     });
   }
 
