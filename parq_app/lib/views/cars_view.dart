@@ -23,6 +23,7 @@ class _CarPageState extends State<CarPage> {
     _getValues();
   }
 
+  //Get cars
   void _getValues() async {
     //Connectie met Firebase
     final snapshot = await FirebaseFirestore.instance
@@ -52,6 +53,7 @@ class _CarPageState extends State<CarPage> {
     });
   }
 
+  //Add car dialog
   void _showAddCarDialog() {
     TextEditingController nameController = TextEditingController();
     TextEditingController typeController = TextEditingController();
@@ -147,11 +149,14 @@ class _CarPageState extends State<CarPage> {
     }
   }
 
-  void _showEditCarDialog() {
-    TextEditingController nameController = TextEditingController();
-    TextEditingController typeController = TextEditingController();
-    TextEditingController colorController = TextEditingController();
-
+  void _showEditCarDialog(Car car) {
+    log(car.id);
+    TextEditingController nameController =
+        TextEditingController(text: car.name);
+    TextEditingController typeController =
+        TextEditingController(text: car.type);
+    TextEditingController colorController =
+        TextEditingController(text: car.color);
     showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -200,15 +205,14 @@ class _CarPageState extends State<CarPage> {
                     if (newName.isNotEmpty &&
                         newType.isNotEmpty &&
                         newColor.isNotEmpty) {
-                      Car car = Car(
-                        //TODO: fix line 205: null check on null value
-                        id: widget.car!.id,
+                      Car updateCar = Car(
+                        id: car.id,
                         userId: widget.user!.id,
                         name: newName,
                         type: newType,
                         color: newColor,
                       );
-                      _editCar(car);
+                      _editCar(updateCar);
                       Navigator.of(context).pop();
                     } else {
                       log('Please enter values for all fields.');
@@ -297,7 +301,7 @@ class _CarPageState extends State<CarPage> {
                             children: [
                               IconButton(
                                 onPressed: () {
-                                  _showEditCarDialog();
+                                  _showEditCarDialog(car);
                                 },
                                 icon: const Icon(
                                   Icons.edit,
