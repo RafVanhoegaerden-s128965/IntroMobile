@@ -16,7 +16,7 @@ class CarPage extends StatefulWidget {
 //BottomNavBar verdwijnt bij deze pagina
 class _CarPageState extends State<CarPage> {
   List<Car> _cars = [];
-
+  final _formKey = GlobalKey<FormState>();
   @override
   void initState() {
     super.initState();
@@ -65,28 +65,49 @@ class _CarPageState extends State<CarPage> {
           return AlertDialog(
             title: const Text('Add Car'),
             content: SizedBox(
-              height: 150,
-              child: Column(
-                children: [
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(
-                      hintText: 'Name',
+              height: 210,
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        hintText: 'Name',
+                      ),
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return 'Please enter a name.';
+                        }
+                        return null;
+                      },
                     ),
-                  ),
-                  TextField(
-                    controller: typeController,
-                    decoration: const InputDecoration(
-                      hintText: 'Type',
+                    TextFormField(
+                      controller: typeController,
+                      decoration: const InputDecoration(
+                        hintText: 'Type',
+                      ),
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return 'Please enter a type.';
+                        }
+                        return null;
+                      },
                     ),
-                  ),
-                  TextField(
-                    controller: colorController,
-                    decoration: const InputDecoration(
-                      hintText: 'Color',
+                    TextFormField(
+                      controller: colorController,
+                      decoration: const InputDecoration(
+                        hintText: 'Color',
+                      ),
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return 'Please enter a color.';
+                        }
+                        return null;
+                      },
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             actions: [
@@ -97,28 +118,31 @@ class _CarPageState extends State<CarPage> {
                 },
               ),
               TextButton(
-                child: const Text('Add'),
-                onPressed: () {
-                  String name = nameController.text.trim();
-                  String type = typeController.text.trim();
-                  String color = colorController.text.trim();
+                  child: const Text('Add'),
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      String name = nameController.text.trim();
+                      String type = typeController.text.trim();
+                      String color = colorController.text.trim();
 
-                  if (name.isNotEmpty && type.isNotEmpty && color.isNotEmpty) {
-                    Car car = Car(
-                      id: FirebaseFirestore.instance
-                          .collection('cars')
-                          .doc()
-                          .id,
-                      userId: widget.user!.id,
-                      name: name,
-                      type: type,
-                      color: color,
-                    );
-                    _addCar(car);
-                    Navigator.of(context).pop();
-                  }
-                },
-              ),
+                      if (name.isNotEmpty &&
+                          type.isNotEmpty &&
+                          color.isNotEmpty) {
+                        Car car = Car(
+                          id: FirebaseFirestore.instance
+                              .collection('cars')
+                              .doc()
+                              .id,
+                          userId: widget.user!.id,
+                          name: name,
+                          type: type,
+                          color: color,
+                        );
+                        _addCar(car);
+                        Navigator.of(context).pop();
+                      }
+                    }
+                  }),
             ],
           );
         });
@@ -163,28 +187,49 @@ class _CarPageState extends State<CarPage> {
           return AlertDialog(
               title: const Text('Edit car'),
               content: SizedBox(
-                height: 150,
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: nameController,
-                      decoration: const InputDecoration(
-                        hintText: 'Name',
+                height: 210,
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: nameController,
+                        decoration: const InputDecoration(
+                          hintText: 'Name',
+                        ),
+                        validator: (value) {
+                          if (value!.isEmpty) {
+                            return 'Please enter a name.';
+                          }
+                          return null;
+                        },
                       ),
-                    ),
-                    TextField(
-                      controller: typeController,
-                      decoration: const InputDecoration(
-                        hintText: 'Type',
+                      TextFormField(
+                        controller: typeController,
+                        decoration: const InputDecoration(
+                          hintText: 'Type',
+                        ),
+                        validator: (value) {
+                          if (value!.isEmpty) {
+                            return 'Please enter a type.';
+                          }
+                          return null;
+                        },
                       ),
-                    ),
-                    TextField(
-                      controller: colorController,
-                      decoration: const InputDecoration(
-                        hintText: 'Color',
+                      TextFormField(
+                        controller: colorController,
+                        decoration: const InputDecoration(
+                          hintText: 'Color',
+                        ),
+                        validator: (value) {
+                          if (value!.isEmpty) {
+                            return 'Please enter a color.';
+                          }
+                          return null;
+                        },
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               actions: [
@@ -195,30 +240,31 @@ class _CarPageState extends State<CarPage> {
                   },
                 ),
                 TextButton(
-                  child: const Text('Edit'),
-                  onPressed: () {
-                    //New values
-                    String newName = nameController.text.trim();
-                    String newType = typeController.text.trim();
-                    String newColor = colorController.text.trim();
+                    child: const Text('Edit'),
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        //New values
+                        String newName = nameController.text.trim();
+                        String newType = typeController.text.trim();
+                        String newColor = colorController.text.trim();
 
-                    if (newName.isNotEmpty &&
-                        newType.isNotEmpty &&
-                        newColor.isNotEmpty) {
-                      Car updateCar = Car(
-                        id: car.id,
-                        userId: widget.user!.id,
-                        name: newName,
-                        type: newType,
-                        color: newColor,
-                      );
-                      _editCar(updateCar);
-                      Navigator.of(context).pop();
-                    } else {
-                      log('Please enter values for all fields.');
-                    }
-                  },
-                ),
+                        if (newName.isNotEmpty &&
+                            newType.isNotEmpty &&
+                            newColor.isNotEmpty) {
+                          Car updateCar = Car(
+                            id: car.id,
+                            userId: widget.user!.id,
+                            name: newName,
+                            type: newType,
+                            color: newColor,
+                          );
+                          _editCar(updateCar);
+                          Navigator.of(context).pop();
+                        } else {
+                          log('Please enter values for all fields.');
+                        }
+                      }
+                    }),
               ]);
         });
   }
