@@ -6,6 +6,9 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/car_model.dart';
 import '../models/parking_model.dart';
+import '../models/ticket_model.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 //import 'package:geolocator/geolocator.dart';
 
 class MapPage extends StatefulWidget {
@@ -17,6 +20,7 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
+  final _formKey = GlobalKey<FormState>();
   //Map rotation
   final MapController _mapController = MapController();
   //Icons
@@ -73,10 +77,30 @@ class _MapPageState extends State<MapPage> {
     });
   }
 
+  void _addTicket(Ticket ticket) async {
+    await FirebaseFirestore.instance.collection('tickets').add(ticket.toMap());
+    setState(() {
+      _getValues();
+    });
+  }
+
+  Future<String> getAddress(double lat, double lng) async {
+    String url =
+        'https://nominatim.openstreetmap.org/reverse?lat=$lat&lon=$lng&format=json&addressdetails=1';
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      return json['address']['road'] ?? '';
+    } else {
+      throw Exception('Failed to get address.');
+    }
+  }
+
   //Build popup
   Widget _buildPopUp(BuildContext context, Parking parking) {
     DateTime timeData = parking.time.toDate();
     String time = "${timeData.hour}:${timeData.minute}";
+    Car? _selectedCar;
     //TODO buttom action
     return AlertDialog(
       content: Column(
@@ -86,18 +110,44 @@ class _MapPageState extends State<MapPage> {
           Text(parking.car.toString()),
           Text(time),
           DropdownButton(
-            value: null,
             items: _cars.map((car) {
               return DropdownMenuItem(
                 value: car,
                 child: Text('${car.name} ${car.type}'),
               );
             }).toList(),
-            onChanged: (selectedCar) {},
+            onChanged: (selectedCar) {
+              setState(() {
+                //FIXME: dit stuk code veroorzaakt een foutmelding
+                _selectedCar = selectedCar;
+                log("Selected carId: ${_selectedCar?.id.toString()}");
+              });
+            },
+            value: _selectedCar,
           ),
           ElevatedButton(
-            onPressed: () {
-              // Hier kun je code toevoegen die wordt uitgevoerd wanneer de knop wordt ingedrukt
+            onPressed: () async {
+              if (_formKey.currentState!.validate()) {
+                String carId = _selectedCar!.id;
+                String streetName = await getAddress(
+                    double.parse(parking.lat), double.parse(parking.lng));
+                if (carId.isNotEmpty) {
+                  Ticket ticket = Ticket(
+                    id: FirebaseFirestore.instance
+                        .collection('tickets')
+                        .doc()
+                        .id,
+                    userId: widget.userId.toString(),
+                    carId: carId,
+                    lat: parking.lat,
+                    lng: parking.lng,
+                    street: streetName,
+                    time: parking.time,
+                  );
+                  _addTicket(ticket);
+                  Navigator.of(context).pop();
+                }
+              }
             },
             child: const Text('Park'),
           ),
