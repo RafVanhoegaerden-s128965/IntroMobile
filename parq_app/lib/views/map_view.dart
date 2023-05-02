@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import '../models/car_model.dart';
 import '../models/parking_model.dart';
 //import 'package:geolocator/geolocator.dart';
 
@@ -24,6 +25,7 @@ class _MapPageState extends State<MapPage> {
 
   //Markers list
   List<Parking> _parkings = [];
+  List<Car> _cars = [];
   // double _latitude = 0;
   // double _longitude = 0;
 
@@ -40,19 +42,34 @@ class _MapPageState extends State<MapPage> {
   //Get database values
   void _getValues() async {
     //Connectie met Firebase
-    final snapshot =
+    //Get parkings
+    final snapshotParkings =
         await FirebaseFirestore.instance.collection('parkings').get();
     //Lijst maken van alle documenten
-    List<DocumentSnapshot> documents = snapshot.docs;
+    List<DocumentSnapshot> documentsParkings = snapshotParkings.docs;
     List<Parking> parking = [];
     //Itereren over elke document en mappen in parking
-    for (var document in documents) {
+    for (var document in documentsParkings) {
       var data = document.data();
       parking.add(Parking.fromMap(data as Map<String, dynamic>));
     }
+    //Get cars
+    final snapshotCars = await FirebaseFirestore.instance
+        .collection('cars')
+        .where('userId', isEqualTo: widget.userId)
+        .get();
+    List<DocumentSnapshot> documentsCars = snapshotCars.docs;
+    List<Car> cars = [];
+    for (var document in documentsCars) {
+      var data = document.data();
+      cars.add(Car.fromMap(data as Map<String, dynamic>));
+    }
+
     setState(() {
       _parkings = parking;
       log("Parkings: ${_parkings.length}");
+      _cars = cars;
+      log("User cars: ${_cars.length}");
     });
   }
 
@@ -68,6 +85,16 @@ class _MapPageState extends State<MapPage> {
         children: [
           Text(parking.car.toString()),
           Text(time),
+          DropdownButton(
+            value: null,
+            items: _cars.map((car) {
+              return DropdownMenuItem(
+                value: car,
+                child: Text('${car.name} ${car.type}'),
+              );
+            }).toList(),
+            onChanged: (selectedCar) {},
+          ),
           ElevatedButton(
             onPressed: () {
               // Hier kun je code toevoegen die wordt uitgevoerd wanneer de knop wordt ingedrukt
