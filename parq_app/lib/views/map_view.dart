@@ -26,10 +26,13 @@ class _MapPageState extends State<MapPage> {
   //Icons
   final _arrowIcon = Image.asset('assets/images/Arrow.png');
   final _parkIcon = Image.asset('assets/images/ParkSpace.png');
+  final _carIcon = Image.asset('assets/images/Car.png');
 
   //Markers list
   List<Parking> _parkings = [];
   List<Car> _cars = [];
+  List<Ticket> _tickets = [];
+
   // double _latitude = 0;
   // double _longitude = 0;
 
@@ -68,12 +71,25 @@ class _MapPageState extends State<MapPage> {
       var data = document.data();
       cars.add(Car.fromMap(data as Map<String, dynamic>));
     }
+    //Get tickets for user
+    final snapshotTickets = await FirebaseFirestore.instance
+        .collection('tickets')
+        .where('userId', isEqualTo: widget.userId)
+        .get();
+    List<DocumentSnapshot> documentsTickets = snapshotTickets.docs;
+    List<Ticket> tickets = [];
+    for (var document in documentsTickets) {
+      var data = document.data();
+      tickets.add(Ticket.fromMap(data as Map<String, dynamic>));
+    }
 
     setState(() {
       _parkings = parking;
       log("Parkings: ${_parkings.length}");
       _cars = cars;
       log("User cars: ${_cars.length}");
+      _tickets = tickets;
+      log("User tickets: ${_tickets.length}");
     });
   }
 
@@ -101,6 +117,7 @@ class _MapPageState extends State<MapPage> {
     DateTime timeData = parking.time.toDate();
     String time = "${timeData.hour}:${timeData.minute}";
     Car? _selectedCar;
+
     //TODO buttom action
     return AlertDialog(
       content: Column(
@@ -166,69 +183,90 @@ class _MapPageState extends State<MapPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text(
-            'Map',
-          ),
+      appBar: AppBar(
+        title: const Text(
+          'Map',
         ),
-        body: FlutterMap(
-          options: MapOptions(
-            rotation: 0,
-            center: LatLng(51.2310, 4.4137),
-            //LatLng(_latitude, _longitude),
-            zoom: 14.0,
-            maxZoom: 16.0,
-            bounds: LatLngBounds(
-              LatLng(51.2310, 4.4137),
-            ),
-            maxBounds: LatLngBounds(
-              LatLng(51.2310, 4.4137),
-            ),
-            keepAlive: true,
+      ),
+      body: FlutterMap(
+        options: MapOptions(
+          rotation: 0,
+          center: LatLng(51.2310, 4.4137),
+          //LatLng(_latitude, _longitude),
+          zoom: 14.0,
+          maxZoom: 16.0,
+          bounds: LatLngBounds(
+            LatLng(51.2310, 4.4137),
           ),
-          mapController: _mapController,
-          children: [
-            //Tiles
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.example.app',
-            ),
-            //Maker
-            MarkerLayer(
-              markers: [
-                //User
-                //TODO use location of users -- Works if location has permission
-                Marker(
-                  point: LatLng(51.2310, 4.4137),
-                  //LatLng(_latitude, _longitude),
-                  width: 25,
-                  height: 25,
-                  builder: (context) => Transform.rotate(
-                    angle: -_mapController.rotation * math.pi / 180,
-                    child: _arrowIcon,
-                  ),
+          maxBounds: LatLngBounds(
+            LatLng(51.2310, 4.4137),
+          ),
+          keepAlive: true,
+        ),
+        mapController: _mapController,
+        children: [
+          //Tiles
+          TileLayer(
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            userAgentPackageName: 'com.example.app',
+          ),
+          //Maker
+          MarkerLayer(
+            markers: [
+              //User
+              //TODO use location of users -- Works if location has permission
+              Marker(
+                point: LatLng(51.2310, 4.4137),
+                //LatLng(_latitude, _longitude),
+                width: 25,
+                height: 25,
+                builder: (context) => Transform.rotate(
+                  angle: -_mapController.rotation * math.pi / 180,
+                  child: _arrowIcon,
                 ),
-                //Parking markers op de map
-                ..._parkings.map((parking) => Marker(
-                      point: LatLng(
-                          double.parse(parking.lat), double.parse(parking.lng)),
-                      width: 35,
-                      height: 35,
-                      builder: (context) => GestureDetector(
-                          onTap: () {
-                            showDialog(
-                                context: context,
-                                builder: (BuildContext context) =>
-                                    _buildPopUp(context, parking));
-                          },
-                          child: Transform.rotate(
-                            angle: -_mapController.rotation * math.pi / 180,
-                            child: _parkIcon,
-                          )),
-                    )),
-              ],
-            ),
-          ],
-        ));
+              ),
+              //Parking markers op de map
+              ..._parkings.map((parking) => Marker(
+                    point: LatLng(
+                        double.parse(parking.lat), double.parse(parking.lng)),
+                    width: 35,
+                    height: 35,
+                    builder: (context) => GestureDetector(
+                        onTap: () {
+                          showDialog(
+                              context: context,
+                              builder: (BuildContext context) =>
+                                  _buildPopUp(context, parking));
+                        },
+                        child: Transform.rotate(
+                          angle: -_mapController.rotation * math.pi / 180,
+                          child: _parkIcon,
+                        )),
+                  )),
+              ..._tickets.map((ticket) => Marker(
+                    point: LatLng(
+                        double.parse(ticket.lat), double.parse(ticket.lng)),
+                    width: 35,
+                    height: 35,
+                    builder: (context) => GestureDetector(
+                        onTap: () {
+                          //TODO: Actie wanneer de gebruiker op klikt
+                        },
+                        child: Transform.rotate(
+                          angle: -_mapController.rotation * math.pi / 180,
+                          child: _parkIcon,
+                        )),
+                  ))
+            ],
+          ),
+        ],
+      ),
+      floatingActionButton: GestureDetector(
+        child: FloatingActionButton(
+          child: Icon(Icons.add_location),
+          onPressed: () {},
+        ),
+      ),
+    );
   }
 }
