@@ -27,6 +27,7 @@ class _MapPageState extends State<MapPage> {
   final _arrowIcon = Image.asset('assets/images/Arrow.png');
   final _parkIcon = Image.asset('assets/images/ParkSpace.png');
   final _carIcon = Image.asset('assets/images/Car.png');
+  final _parkIconUser = Image.asset('assets/images/ParkSpaceUser.png');
 
   //Markers list
   List<Parking> _parkings = [];
@@ -173,6 +174,16 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
+  bool _active = false;
+  Future<void> _addParking(Parking parking) async {
+    await FirebaseFirestore.instance
+        .collection('parkings')
+        .add(parking.toMap());
+    setState(() {
+      _getValues();
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -190,19 +201,29 @@ class _MapPageState extends State<MapPage> {
       ),
       body: FlutterMap(
         options: MapOptions(
-          rotation: 0,
-          center: LatLng(51.2310, 4.4137),
-          //LatLng(_latitude, _longitude),
-          zoom: 14.0,
-          maxZoom: 16.0,
-          bounds: LatLngBounds(
-            LatLng(51.2310, 4.4137),
-          ),
-          maxBounds: LatLngBounds(
-            LatLng(51.2310, 4.4137),
-          ),
-          keepAlive: true,
-        ),
+            rotation: 0,
+            center: LatLng(51.2310, 4.4137),
+            //LatLng(_latitude, _longitude),
+            zoom: 14.0,
+            maxZoom: 16.0,
+            bounds: LatLngBounds(
+              LatLng(51.2310, 4.4137),
+            ),
+            maxBounds: LatLngBounds(
+              LatLng(51.2310, 4.4137),
+            ),
+            keepAlive: true,
+            onTap: _active
+                ? (position, latlng) {
+                    Parking parking = Parking(
+                        car: "test",
+                        userId: widget.userId.toString(),
+                        lat: latlng.latitude.toString(),
+                        lng: latlng.longitude.toString(),
+                        time: Timestamp.now());
+                    _addParking(parking);
+                  }
+                : null),
         mapController: _mapController,
         children: [
           //Tiles
@@ -240,7 +261,9 @@ class _MapPageState extends State<MapPage> {
                         },
                         child: Transform.rotate(
                           angle: -_mapController.rotation * math.pi / 180,
-                          child: _parkIcon,
+                          child: parking.userId == widget.userId
+                              ? _parkIconUser
+                              : _parkIcon,
                         )),
                   )),
               ..._tickets.map((ticket) => Marker(
@@ -254,7 +277,7 @@ class _MapPageState extends State<MapPage> {
                         },
                         child: Transform.rotate(
                           angle: -_mapController.rotation * math.pi / 180,
-                          child: _parkIcon,
+                          child: _carIcon,
                         )),
                   ))
             ],
@@ -263,8 +286,12 @@ class _MapPageState extends State<MapPage> {
       ),
       floatingActionButton: GestureDetector(
         child: FloatingActionButton(
-          child: Icon(Icons.add_location),
-          onPressed: () {},
+          child: Icon(_active ? Icons.cancel : Icons.add_location),
+          onPressed: () {
+            setState(() {
+              _active = !_active;
+            });
+          },
         ),
       ),
     );
