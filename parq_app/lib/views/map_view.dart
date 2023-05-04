@@ -270,12 +270,14 @@ class _MapPageState extends State<MapPage> {
                     width: 35,
                     height: 35,
                     builder: (context) => GestureDetector(
-                        onTap: () {
-                          showDialog(
-                              context: context,
-                              builder: (BuildContext context) =>
-                                  _buildPopUpParking(context, parking));
-                        },
+                        onTap: parking.userId != widget.userId
+                            ? () {
+                                showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) =>
+                                        _buildPopUpParking(context, parking));
+                              }
+                            : null,
                         child: Transform.rotate(
                           angle: -_mapController.rotation * math.pi / 180,
                           child: parking.userId == widget.userId
