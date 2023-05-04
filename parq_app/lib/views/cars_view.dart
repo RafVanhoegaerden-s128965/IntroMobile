@@ -56,7 +56,7 @@ class _CarPageState extends State<CarPage> {
 
   //Add car dialog
   void _showAddCarDialog() {
-    TextEditingController nameController = TextEditingController();
+    TextEditingController brandController = TextEditingController();
     TextEditingController typeController = TextEditingController();
     TextEditingController colorController = TextEditingController();
 
@@ -72,13 +72,13 @@ class _CarPageState extends State<CarPage> {
                 child: Column(
                   children: [
                     TextFormField(
-                      controller: nameController,
+                      controller: brandController,
                       decoration: const InputDecoration(
-                        hintText: 'Name',
+                        hintText: 'Brand',
                       ),
                       validator: (value) {
                         if (value!.isEmpty) {
-                          return 'Please enter a name.';
+                          return 'Please enter a brand.';
                         }
                         return null;
                       },
@@ -122,11 +122,11 @@ class _CarPageState extends State<CarPage> {
                   child: const Text('Add'),
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
-                      String name = nameController.text.trim();
+                      String brand = brandController.text.trim();
                       String type = typeController.text.trim();
                       String color = colorController.text.trim();
 
-                      if (name.isNotEmpty &&
+                      if (brand.isNotEmpty &&
                           type.isNotEmpty &&
                           color.isNotEmpty) {
                         Car car = Car(
@@ -135,7 +135,7 @@ class _CarPageState extends State<CarPage> {
                               .doc()
                               .id,
                           userId: widget.user!.id,
-                          name: name,
+                          brand: brand,
                           type: type,
                           color: color,
                         );
@@ -159,7 +159,7 @@ class _CarPageState extends State<CarPage> {
       if (snapshot.docs.isNotEmpty) {
         final docId = snapshot.docs.first.id;
         await FirebaseFirestore.instance.collection('cars').doc(docId).update({
-          'name': car.name,
+          'brand': car.brand,
           'type': car.type,
           'color': car.color,
         });
@@ -176,8 +176,8 @@ class _CarPageState extends State<CarPage> {
 
   void _showEditCarDialog(Car car) {
     log(car.id);
-    TextEditingController nameController =
-        TextEditingController(text: car.name);
+    TextEditingController brandController =
+        TextEditingController(text: car.brand);
     TextEditingController typeController =
         TextEditingController(text: car.type);
     TextEditingController colorController =
@@ -194,13 +194,13 @@ class _CarPageState extends State<CarPage> {
                   child: Column(
                     children: [
                       TextFormField(
-                        controller: nameController,
+                        controller: brandController,
                         decoration: const InputDecoration(
-                          hintText: 'Name',
+                          hintText: 'Brand',
                         ),
                         validator: (value) {
                           if (value!.isEmpty) {
-                            return 'Please enter a name.';
+                            return 'Please enter a brand.';
                           }
                           return null;
                         },
@@ -245,17 +245,17 @@ class _CarPageState extends State<CarPage> {
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
                         //New values
-                        String newName = nameController.text.trim();
+                        String newBrand = brandController.text.trim();
                         String newType = typeController.text.trim();
                         String newColor = colorController.text.trim();
 
-                        if (newName.isNotEmpty &&
+                        if (newBrand.isNotEmpty &&
                             newType.isNotEmpty &&
                             newColor.isNotEmpty) {
                           Car updateCar = Car(
                             id: car.id,
                             userId: widget.user!.id,
-                            name: newName,
+                            brand: newBrand,
                             type: newType,
                             color: newColor,
                           );
@@ -290,7 +290,7 @@ class _CarPageState extends State<CarPage> {
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text('Delete Car'),
-            content: Text('Are you sure you want to delete ${car.name}?'),
+            content: Text('Are you sure you want to delete ${car.brand}?'),
             actions: [
               TextButton(
                 child: const Text('Cancel'),
@@ -338,7 +338,7 @@ class _CarPageState extends State<CarPage> {
                           Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(car.name),
+                              Text(car.brand),
                               Text(car.type),
                               Text(car.color),
                             ],

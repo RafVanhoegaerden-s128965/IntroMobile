@@ -64,7 +64,7 @@ class _MapPageState extends State<MapPage> {
       parking.add(Parking.fromMap(data as Map<String, dynamic>));
     }
 
-    /// Get cars
+    // Get cars
     final snapshotCars = await FirebaseFirestore.instance
         .collection('cars')
         .where('userId', isEqualTo: widget.userId)
@@ -184,7 +184,7 @@ class _MapPageState extends State<MapPage> {
                 ? _carsNotInUse.map((car) {
                     return DropdownMenuItem(
                       value: car,
-                      child: Text('${car.name} ${car.type}'),
+                      child: Text('${car.brand} ${car.type}'),
                     );
                   }).toList()
                 : null, //TODO: user moet een knop krijgen om een auto toe te voegen
@@ -246,13 +246,12 @@ class _MapPageState extends State<MapPage> {
             rotation: 0,
             center: LatLng(51.2310, 4.4137),
             //LatLng(_latitude, _longitude),
-            zoom: 14.0,
-            maxZoom: 16.0,
-            bounds: LatLngBounds(
-              LatLng(51.2310, 4.4137),
-            ),
+            zoom: 16.0,
+            maxZoom: 18.0,
+            minZoom: 14.0,
             maxBounds: LatLngBounds(
-              LatLng(51.2310, 4.4137),
+              LatLng(51.2210, 4.4037),
+              LatLng(51.2410, 4.4237),
             ),
             keepAlive: true,
             onTap: _active
@@ -288,7 +287,7 @@ class _MapPageState extends State<MapPage> {
                 width: 25,
                 height: 25,
                 builder: (context) => Transform.rotate(
-                  angle: -_mapController.rotation * math.pi / 180,
+                  angle: -(_mapController.rotation - 15) * math.pi / 180,
                   child: _arrowIcon,
                 ),
               ),
