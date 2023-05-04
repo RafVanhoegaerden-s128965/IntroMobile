@@ -32,7 +32,9 @@ class _MapPageState extends State<MapPage> {
   //Markers list
   List<Parking> _parkings = [];
   List<Car> _cars = [];
+  List<Car> _carsNotInUse = [];
   List<Ticket> _tickets = [];
+  List<Ticket> _activeTickets = [];
 
   // double _latitude = 0;
   // double _longitude = 0;
@@ -84,6 +86,27 @@ class _MapPageState extends State<MapPage> {
       var data = document.data();
       tickets.add(Ticket.fromMap(data as Map<String, dynamic>));
     }
+    //Get active tickets for user
+    List<Ticket> activeTickets = [];
+    for (var ticket in tickets) {
+      if (ticket.active) {
+        activeTickets.add(ticket);
+      }
+    }
+
+    //Get cars that not in use
+    List<Car> carsNotInUse = [];
+    if (tickets.isEmpty) {
+      carsNotInUse = cars;
+    } else {
+      for (var car in cars) {
+        for (var ticket in activeTickets) {
+          if (car.id != ticket.carId) {
+            carsNotInUse.add(car);
+          }
+        }
+      }
+    }
 
     setState(() {
       _parkings = parking;
@@ -93,8 +116,12 @@ class _MapPageState extends State<MapPage> {
       log("User Parkings: ${_userParkings.length}");
       _cars = cars;
       log("User cars: ${_cars.length}");
+      _carsNotInUse = carsNotInUse;
+      log("User cars not in use: ${_carsNotInUse.length}");
       _tickets = tickets;
       log("User tickets: ${_tickets.length}");
+      _activeTickets = activeTickets;
+      log("User tickets: ${_activeTickets.length}");
     });
   }
 
@@ -153,12 +180,14 @@ class _MapPageState extends State<MapPage> {
           Text(parking.car.toString()),
           Text(time),
           DropdownButton(
-            items: _cars.map((car) {
-              return DropdownMenuItem(
-                value: car,
-                child: Text('${car.name} ${car.type}'),
-              );
-            }).toList(),
+            items: _carsNotInUse.isNotEmpty
+                ? _carsNotInUse.map((car) {
+                    return DropdownMenuItem(
+                      value: car,
+                      child: Text('${car.name} ${car.type}'),
+                    );
+                  }).toList()
+                : null, //TODO: user moet een knop krijgen om een auto toe te voegen
             onChanged: (selectedCar) {
               setState(() {
                 _selectedCar = selectedCar;
@@ -277,7 +306,7 @@ class _MapPageState extends State<MapPage> {
                                     builder: (BuildContext context) =>
                                         _buildPopUpParking(context, parking));
                               }
-                            : null,
+                            : null, //TODO: user krijgt andere popup voor zijn eigen parkings
                         child: Transform.rotate(
                           angle: -_mapController.rotation * math.pi / 180,
                           child: parking.userId == widget.userId
