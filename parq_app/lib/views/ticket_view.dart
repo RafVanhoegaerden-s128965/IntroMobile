@@ -8,6 +8,8 @@ class TicketPage extends StatefulWidget {
   State<TicketPage> createState() => _TicketPageState();
 }
 
+//TODO: user kan active tickets bekijken en erop klikken om die vrij te geven, List met active tickets is al aangemaakt
+//TODO: user kan zijn geschiedenis bekijken door te controleren bij de field "active" == "false"
 class _TicketPageState extends State<TicketPage> {
   @override
   Widget build(BuildContext context) {
@@ -17,6 +19,7 @@ class _TicketPageState extends State<TicketPage> {
           'Tickets',
         ),
       ),
+      body: const Text("Tickets"),
     );
   }
 }
