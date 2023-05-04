@@ -61,7 +61,8 @@ class _MapPageState extends State<MapPage> {
       var data = document.data();
       parking.add(Parking.fromMap(data as Map<String, dynamic>));
     }
-    //Get cars
+
+    /// Get cars
     final snapshotCars = await FirebaseFirestore.instance
         .collection('cars')
         .where('userId', isEqualTo: widget.userId)
@@ -86,18 +87,14 @@ class _MapPageState extends State<MapPage> {
 
     setState(() {
       _parkings = parking;
-      log("Parkings: ${_parkings.length}");
+      log("Total Parkings: ${_parkings.length}");
+      var _userParkings =
+          _parkings.where((parking) => parking.userId == widget.userId);
+      log("User Parkings: ${_userParkings.length}");
       _cars = cars;
       log("User cars: ${_cars.length}");
       _tickets = tickets;
       log("User tickets: ${_tickets.length}");
-    });
-  }
-
-  void _addTicket(Ticket ticket) async {
-    await FirebaseFirestore.instance.collection('tickets').add(ticket.toMap());
-    setState(() {
-      _getValues();
     });
   }
 
@@ -113,13 +110,41 @@ class _MapPageState extends State<MapPage> {
     }
   }
 
+  void _addTicket(Ticket ticket) async {
+    await FirebaseFirestore.instance.collection('tickets').add(ticket.toMap());
+    setState(() {
+      _getValues();
+    });
+  }
+
+  bool _active = false;
+  Future<void> _addParking(Parking parking) async {
+    await FirebaseFirestore.instance
+        .collection('parkings')
+        .add(parking.toMap());
+    setState(() {
+      _getValues();
+    });
+  }
+
+  void _deleteParking(Parking parking) async {
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('parkings')
+        .where('id', isEqualTo: parking.id)
+        .get();
+    if (snapshot.docs.isNotEmpty) {
+      await snapshot.docs.first.reference.delete();
+      setState(() {
+        _getValues();
+      });
+    }
+  }
+
   //Build popup
-  Widget _buildPopUp(BuildContext context, Parking parking) {
+  Widget _buildPopUpParking(BuildContext context, Parking parking) {
     DateTime timeData = parking.time.toDate();
     String time = "${timeData.hour}:${timeData.minute}";
     Car? _selectedCar;
-
-    //TODO buttom action
     return AlertDialog(
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -136,7 +161,6 @@ class _MapPageState extends State<MapPage> {
             }).toList(),
             onChanged: (selectedCar) {
               setState(() {
-                //FIXME: dit stuk code veroorzaakt een foutmelding
                 _selectedCar = selectedCar;
                 log("Selected carId: ${_selectedCar?.id.toString()}");
               });
@@ -145,43 +169,32 @@ class _MapPageState extends State<MapPage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (_formKey.currentState!.validate()) {
-                String carId = _selectedCar!.id;
-                String streetName = await getAddress(
-                    double.parse(parking.lat), double.parse(parking.lng));
-                if (carId.isNotEmpty) {
-                  Ticket ticket = Ticket(
-                    id: FirebaseFirestore.instance
-                        .collection('tickets')
-                        .doc()
-                        .id,
-                    userId: widget.userId.toString(),
-                    carId: carId,
-                    lat: parking.lat,
-                    lng: parking.lng,
-                    street: streetName,
-                    time: parking.time,
-                  );
-                  _addTicket(ticket);
-                  Navigator.of(context).pop();
-                }
+              //if (_formKey.currentState!.validate()) {
+              String carId = _selectedCar!.id;
+              String streetName = await getAddress(
+                  double.parse(parking.lat), double.parse(parking.lng));
+              if (carId.isNotEmpty) {
+                Ticket ticket = Ticket(
+                  id: parking.id,
+                  userId: widget.userId.toString(),
+                  carId: carId,
+                  lat: parking.lat,
+                  lng: parking.lng,
+                  street: streetName,
+                  time: Timestamp.now(),
+                  active: true,
+                );
+                _deleteParking(parking);
+                _addTicket(ticket);
+                Navigator.of(context).pop();
               }
+              //}
             },
             child: const Text('Park'),
           ),
         ],
       ),
     );
-  }
-
-  bool _active = false;
-  Future<void> _addParking(Parking parking) async {
-    await FirebaseFirestore.instance
-        .collection('parkings')
-        .add(parking.toMap());
-    setState(() {
-      _getValues();
-    });
   }
 
   @override
@@ -216,6 +229,10 @@ class _MapPageState extends State<MapPage> {
             onTap: _active
                 ? (position, latlng) {
                     Parking parking = Parking(
+                        id: FirebaseFirestore.instance
+                            .collection('parkings')
+                            .doc()
+                            .id,
                         car: "test",
                         userId: widget.userId.toString(),
                         lat: latlng.latitude.toString(),
@@ -257,7 +274,7 @@ class _MapPageState extends State<MapPage> {
                           showDialog(
                               context: context,
                               builder: (BuildContext context) =>
-                                  _buildPopUp(context, parking));
+                                  _buildPopUpParking(context, parking));
                         },
                         child: Transform.rotate(
                           angle: -_mapController.rotation * math.pi / 180,

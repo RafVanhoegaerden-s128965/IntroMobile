@@ -10,6 +10,7 @@ class Ticket {
   String lng;
   String street;
   Timestamp time;
+  bool active;
 
   Ticket({
     required this.id,
@@ -19,6 +20,7 @@ class Ticket {
     required this.lng,
     required this.time,
     required this.street,
+    required this.active,
   });
 
   Map<String, dynamic> toMap() {
@@ -30,6 +32,7 @@ class Ticket {
       'lng': lng,
       'time': time,
       'street': street,
+      'active': active,
     };
   }
 
@@ -42,6 +45,7 @@ class Ticket {
       lng: map['lng'],
       time: map['time'],
       street: map['street'],
+      active: map['active'] ?? false,
     );
   }
 }

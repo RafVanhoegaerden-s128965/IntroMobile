@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Parking {
+  String id;
   String car;
   String userId;
   String lat;
@@ -8,6 +9,7 @@ class Parking {
   Timestamp time;
 
   Parking({
+    required this.id,
     required this.car,
     required this.userId,
     required this.lat,
@@ -17,6 +19,7 @@ class Parking {
 
   Map<String, dynamic> toMap() {
     return {
+      'id': id,
       'userId': userId,
       'car': car,
       'lat': lat,
@@ -27,6 +30,7 @@ class Parking {
 
   factory Parking.fromMap(Map<Object?, dynamic> map) {
     return Parking(
+      id: map['id'],
       userId: map['userId'],
       car: map['car'],
       lat: map['lat'],
