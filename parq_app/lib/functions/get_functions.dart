@@ -1,8 +1,6 @@
 import 'dart:convert';
-import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:parq_app/models/car_model.dart';
-import 'package:parq_app/models/user_model.dart';
 import '../models/parking_model.dart';
 import '../models/ticket_model.dart';
 import 'package:http/http.dart' as http;
