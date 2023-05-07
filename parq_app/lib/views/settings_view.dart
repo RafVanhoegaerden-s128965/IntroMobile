@@ -127,7 +127,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => CarPage(
-                      user: _user,
+                      userId: _user!.id.toString(),
                     ),
                   ),
                 );

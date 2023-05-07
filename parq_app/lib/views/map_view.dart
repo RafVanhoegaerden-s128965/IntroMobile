@@ -4,12 +4,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:parq_app/functions/add_functions.dart';
+import 'package:parq_app/functions/delete_functions.dart';
+import 'package:parq_app/functions/get_functions.dart';
 import '../models/car_model.dart';
 import '../models/parking_model.dart';
 import '../models/ticket_model.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-
 import '../models/user_model.dart';
 import 'cars_view.dart';
 //import 'package:geolocator/geolocator.dart';
@@ -25,7 +25,8 @@ class MapPage extends StatefulWidget {
 class _MapPageState extends State<MapPage> {
   User? _user;
 
-  final _formKey = GlobalKey<FormState>();
+  /// Sets adding marker on map active
+  bool _active = false;
   //Map rotation
   final MapController _mapController = MapController();
   //Icons
@@ -33,7 +34,6 @@ class _MapPageState extends State<MapPage> {
   final _parkIcon = Image.asset('assets/images/ParkSpace.png');
   final _carIcon = Image.asset('assets/images/Car.png');
   final _parkIconUser = Image.asset('assets/images/ParkSpaceUser.png');
-
   //Markers list
   List<Parking> _parkings = [];
   List<Car> _cars = [];
@@ -54,67 +54,15 @@ class _MapPageState extends State<MapPage> {
   //   });
   // }
 
-  //Get database values
   void _getValues() async {
-    //Connectie met Firebase
-    //Get parkings
-    final snapshotParkings =
-        await FirebaseFirestore.instance.collection('parkings').get();
-    //Lijst maken van alle documenten
-    List<DocumentSnapshot> documentsParkings = snapshotParkings.docs;
-    List<Parking> parking = [];
-    //Itereren over elke document en mappen in parking
-    for (var document in documentsParkings) {
-      var data = document.data();
-      parking.add(Parking.fromMap(data as Map<String, dynamic>));
-    }
-
-    // Get cars
-    final snapshotCars = await FirebaseFirestore.instance
-        .collection('cars')
-        .where('userId', isEqualTo: widget.userId)
-        .get();
-    List<DocumentSnapshot> documentsCars = snapshotCars.docs;
-    List<Car> cars = [];
-    for (var document in documentsCars) {
-      var data = document.data();
-      cars.add(Car.fromMap(data as Map<String, dynamic>));
-    }
-    //Get tickets for user
-    final snapshotTickets = await FirebaseFirestore.instance
-        .collection('tickets')
-        .where('userId', isEqualTo: widget.userId)
-        .get();
-    List<DocumentSnapshot> documentsTickets = snapshotTickets.docs;
-    List<Ticket> tickets = [];
-    for (var document in documentsTickets) {
-      var data = document.data();
-      tickets.add(Ticket.fromMap(data as Map<String, dynamic>));
-    }
-    //Get active tickets for user
-    List<Ticket> activeTickets = [];
-    for (var ticket in tickets) {
-      if (ticket.active) {
-        activeTickets.add(ticket);
-      }
-    }
-
-    //Get cars that not in use
-    List<Car> carsNotInUse = [];
-    if (tickets.isEmpty) {
-      carsNotInUse = cars;
-    } else {
-      for (var car in cars) {
-        for (var ticket in activeTickets) {
-          if (car.id != ticket.carId) {
-            carsNotInUse.add(car);
-          }
-        }
-      }
-    }
-
+    String userId = widget.userId.toString();
+    List<Parking> parkings = await getAllParkings();
+    List<Car> cars = await getAllCarsOfUser(userId);
+    List<Ticket> tickets = await getAllTicketsOfUser(userId);
+    List<Ticket> activeTickets = await getAllActiveTicketsOfUser(userId);
+    List<Car> carsNotInUse = await getAllCarsNotInUse(userId);
     //Get users
-    Future<void> _getUser() async {
+    Future<void> getUser() async {
       try {
         final snapshot = await FirebaseFirestore.instance
             .collection('users')
@@ -136,12 +84,12 @@ class _MapPageState extends State<MapPage> {
     }
 
     setState(() {
-      _getUser();
-      _parkings = parking;
+      getUser();
+      _parkings = parkings;
       log("Total Parkings: ${_parkings.length}");
-      var _userParkings =
+      var userParkings =
           _parkings.where((parking) => parking.userId == widget.userId);
-      log("User Parkings: ${_userParkings.length}");
+      log("User Parkings: ${userParkings.length}");
       _cars = cars;
       log("User cars: ${_cars.length}");
       _carsNotInUse = carsNotInUse;
@@ -153,48 +101,26 @@ class _MapPageState extends State<MapPage> {
     });
   }
 
-  Future<String> getAddress(double lat, double lng) async {
-    String url =
-        'https://nominatim.openstreetmap.org/reverse?lat=$lat&lon=$lng&format=json&addressdetails=1';
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body);
-      return json['address']['road'] ?? '';
-    } else {
-      throw Exception('Failed to get address.');
-    }
-  }
-
-  void _addTicket(Ticket ticket) async {
-    await FirebaseFirestore.instance.collection('tickets').add(ticket.toMap());
+  void _addTicket(Ticket ticket) {
+    addTicket(ticket);
     setState(() {
       _getValues();
     });
   }
 
-  bool _active = false;
-  Future<void> _addParking(Parking parking) async {
-    await FirebaseFirestore.instance
-        .collection('parkings')
-        .add(parking.toMap());
+  void _addParking(Parking parking) {
+    addParking(parking);
     setState(() {
       _getValues();
-      //Turn off addParking after tap
       _active = !_active;
     });
   }
 
-  void _deleteParking(Parking parking) async {
-    QuerySnapshot snapshot = await FirebaseFirestore.instance
-        .collection('parkings')
-        .where('id', isEqualTo: parking.id)
-        .get();
-    if (snapshot.docs.isNotEmpty) {
-      await snapshot.docs.first.reference.delete();
-      setState(() {
-        _getValues();
-      });
-    }
+  void _deleteParking(Parking parking) {
+    deleteParking(parking);
+    setState(() {
+      _getValues();
+    });
   }
 
   //Build popup GreenParking
@@ -250,7 +176,7 @@ class _MapPageState extends State<MapPage> {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => CarPage(
-                      user: _user,
+                      userId: _user!.id,
                     ),
                   ),
                 );
@@ -293,6 +219,7 @@ class _MapPageState extends State<MapPage> {
 
   //build popup ticket
   //TODO: replace variables
+  //FIXME: popup is te klein bij toevoegen van meerdere wagens.
   Widget _buildPopUpTicket(BuildContext context, Ticket ticket) {
     return AlertDialog(
         title: const Text('Ticket'),

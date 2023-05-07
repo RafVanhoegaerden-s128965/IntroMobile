@@ -1,14 +1,14 @@
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:parq_app/functions/add_functions.dart';
+import 'package:parq_app/functions/delete_functions.dart';
+import 'package:parq_app/functions/get_functions.dart';
 import 'package:parq_app/models/car_model.dart';
-import 'package:parq_app/models/user_model.dart';
 
 class CarPage extends StatefulWidget {
-  final Car? car;
-  final User? user;
-  const CarPage({super.key, this.user, this.car});
-
+  final String userId;
+  const CarPage({super.key, required this.userId});
   @override
   State<CarPage> createState() => _CarPageState();
 }
@@ -17,7 +17,6 @@ class CarPage extends StatefulWidget {
 class _CarPageState extends State<CarPage> {
   List<Car> _cars = [];
   final _formKey = GlobalKey<FormState>();
-
   @override
   void initState() {
     super.initState();
@@ -26,19 +25,7 @@ class _CarPageState extends State<CarPage> {
 
   //Get cars
   void _getValues() async {
-    //Connectie met Firebase
-    final snapshot = await FirebaseFirestore.instance
-        .collection('cars')
-        .where('userId', isEqualTo: widget.user?.id.toString())
-        .get();
-    //Lijst maken van alle documenten
-    List<DocumentSnapshot> documents = snapshot.docs;
-    List<Car> cars = [];
-    //Itereren over elke document en mappen in parking
-    for (var document in documents) {
-      var data = document.data();
-      cars.add(Car.fromMap(data as Map<String, dynamic>));
-    }
+    List<Car> cars = await getAllCarsOfUser(widget.userId.toString());
     setState(() {
       _cars = cars;
       log("Cars: ${_cars.length}");
@@ -47,8 +34,7 @@ class _CarPageState extends State<CarPage> {
 
   //Add car
   void _addCar(Car car) async {
-    //Gebruik bij het toevoegen bij de id van de car: 'id': FirebaseFirestore.instance.collection('car').doc().id,
-    await FirebaseFirestore.instance.collection('cars').add(car.toMap());
+    addCar(car);
     setState(() {
       _getValues();
     });
@@ -59,7 +45,6 @@ class _CarPageState extends State<CarPage> {
     TextEditingController brandController = TextEditingController();
     TextEditingController typeController = TextEditingController();
     TextEditingController colorController = TextEditingController();
-
     showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -134,7 +119,7 @@ class _CarPageState extends State<CarPage> {
                               .collection('cars')
                               .doc()
                               .id,
-                          userId: widget.user!.id,
+                          userId: widget.userId,
                           brand: brand,
                           type: type,
                           color: color,
@@ -254,7 +239,7 @@ class _CarPageState extends State<CarPage> {
                             newColor.isNotEmpty) {
                           Car updateCar = Car(
                             id: car.id,
-                            userId: widget.user!.id,
+                            userId: widget.userId,
                             brand: newBrand,
                             type: newType,
                             color: newColor,
@@ -271,17 +256,11 @@ class _CarPageState extends State<CarPage> {
   }
 
   //Delete car
-  void _deleteCar(Car car) async {
-    QuerySnapshot snapshot = await FirebaseFirestore.instance
-        .collection('cars')
-        .where('id', isEqualTo: car.id)
-        .get();
-    if (snapshot.docs.isNotEmpty) {
-      await snapshot.docs.first.reference.delete();
-      setState(() {
-        _getValues();
-      });
-    }
+  void _deleteCar(Car car) {
+    deleteCar(car);
+    setState(() {
+      _getValues();
+    });
   }
 
   void _showDeleteCar(Car car) async {
