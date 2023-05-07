@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -97,29 +98,7 @@ class _MapPageState extends State<MapPage> {
       _tickets = tickets;
       log("User tickets: ${_tickets.length}");
       _activeTickets = activeTickets;
-      log("User tickets: ${_activeTickets.length}");
-    });
-  }
-
-  void _addTicket(Ticket ticket) {
-    addTicket(ticket);
-    setState(() {
-      _getValues();
-    });
-  }
-
-  void _addParking(Parking parking) {
-    addParking(parking);
-    setState(() {
-      _getValues();
-      _active = !_active;
-    });
-  }
-
-  void _deleteParking(Parking parking) {
-    deleteParking(parking);
-    setState(() {
-      _getValues();
+      log("Active user tickets: ${_activeTickets.length}");
     });
   }
 
@@ -146,7 +125,7 @@ class _MapPageState extends State<MapPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("Choose Car:"),
+                    //const Text("Choose Car:"),
                     DropdownButton(
                       items: _carsNotInUse.isNotEmpty
                           ? _carsNotInUse.map((car) {
@@ -184,11 +163,10 @@ class _MapPageState extends State<MapPage> {
               child: const Text('Change car')),
           ElevatedButton(
             onPressed: () async {
-              //if (_formKey.currentState!.validate()) {
               String carId = selectedCar!.id;
-              String streetName = await getAddress(
-                  double.parse(parking.lat), double.parse(parking.lng));
               if (carId.isNotEmpty) {
+                String streetName = await getAddress(
+                    double.parse(parking.lat), double.parse(parking.lng));
                 Ticket ticket = Ticket(
                   id: parking.id,
                   userId: widget.userId.toString(),
@@ -197,13 +175,16 @@ class _MapPageState extends State<MapPage> {
                   lng: parking.lng,
                   street: streetName,
                   time: Timestamp.now(),
-                  active: true,
+                  active: "true",
                 );
-                _deleteParking(parking);
-                _addTicket(ticket);
+                addTicket(ticket);
+                deleteParking(parking);
                 Navigator.of(context).pop();
               }
-              //}
+              setState(() {
+                print('test');
+                _getValues();
+              });
             },
             child: const Text('Park'),
           ),
@@ -217,32 +198,88 @@ class _MapPageState extends State<MapPage> {
     //_getCurrentLocation();
   }
 
+  Future<void> _showSetTimePopUp(
+      BuildContext context, Car car, Ticket ticket) async {
+    DateTime selectedTime = DateTime.now();
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Set Time'),
+          content: SizedBox(
+            height: 200,
+            child: CupertinoDatePicker(
+              initialDateTime: selectedTime,
+              onDateTimeChanged: (DateTime newDateTime) {
+                selectedTime = newDateTime;
+              },
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Save'),
+              onPressed: () {
+                addParking(Parking(
+                    id: FirebaseFirestore.instance
+                        .collection('parkings')
+                        .doc()
+                        .id,
+                    car: car.brand,
+                    userId: car.userId,
+                    lat: ticket.lat,
+                    lng: ticket.lng,
+                    time: Timestamp.fromDate(selectedTime)));
+                deActivateTicket(ticket);
+                Navigator.of(context).pop();
+                setState(() {
+                  _getValues();
+                });
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   //build popup ticket
-  //TODO: replace variables
-  //FIXME: popup is te klein bij toevoegen van meerdere wagens.
-  Widget _buildPopUpTicket(BuildContext context, Ticket ticket) {
+  Future<Widget> buildPopUpTicket(BuildContext context, Ticket ticket) async {
+    DateTime timeData = ticket.time.toDate();
+    String time = "${timeData.hour}:${timeData.minute}";
+    Car car = await getCarWithId(ticket.carId);
     return AlertDialog(
-        title: const Text('Ticket'),
-        content: SizedBox(
-            height: 100,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Text("Time left: "),
-                Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      const Text("Car:"),
-                      Row(
-                        children: [
-                          Text("Brand "),
-                          Text("Type "),
-                          Text("Color"),
-                        ],
-                      ),
-                    ])
-              ],
-            )));
+      title: const Text('Ticket details'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Car: ${car.brand}'),
+          Text('Street: ${ticket.street}'),
+          Text('Time parked: $time'),
+        ],
+      ),
+      actions: [
+        ElevatedButton(
+          child: const Text('Close'),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        ElevatedButton(
+          child: const Text('Leave'),
+          onPressed: () async {
+            Navigator.of(context).pop();
+            await _showSetTimePopUp(context, car, ticket);
+          },
+        ),
+      ],
+    );
   }
 
   //build popup RedParking
@@ -293,7 +330,11 @@ class _MapPageState extends State<MapPage> {
                         lat: latlng.latitude.toString(),
                         lng: latlng.longitude.toString(),
                         time: Timestamp.now());
-                    _addParking(parking);
+                    addParking(parking);
+                    setState(() {
+                      _getValues();
+                      _active = !_active;
+                    });
                   }
                 : null),
         mapController: _mapController,
@@ -333,7 +374,13 @@ class _MapPageState extends State<MapPage> {
                                         _buildPopUpGreenParking(
                                             context, parking));
                               }
-                            : null, //TODO: user krijgt andere popup voor zijn eigen parkings??
+                            : () {
+                                showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) =>
+                                        _buildPopUpRedParking(
+                                            context, parking));
+                              }, //TODO: user krijgt andere popup voor zijn eigen parkings??
                         child: Transform.rotate(
                           angle: -_mapController.rotation * math.pi / 180,
                           child: parking.userId == widget.userId
@@ -341,7 +388,7 @@ class _MapPageState extends State<MapPage> {
                               : _parkIcon,
                         )),
                   )),
-              ..._tickets.map((ticket) => Marker(
+              ..._activeTickets.map((ticket) => Marker(
                     point: LatLng(
                         double.parse(ticket.lat), double.parse(ticket.lng)),
                     width: 35,
@@ -349,9 +396,21 @@ class _MapPageState extends State<MapPage> {
                     builder: (context) => GestureDetector(
                         onTap: () {
                           showDialog(
-                              context: context,
-                              builder: (BuildContext context) =>
-                                  _buildPopUpTicket(context, ticket));
+                            context: context,
+                            builder: (BuildContext context) {
+                              return FutureBuilder<Widget>(
+                                future: buildPopUpTicket(context, ticket),
+                                builder: (BuildContext context,
+                                    AsyncSnapshot<Widget> snapshot) {
+                                  if (snapshot.hasData) {
+                                    return snapshot.data!;
+                                  } else {
+                                    return const CircularProgressIndicator();
+                                  }
+                                },
+                              );
+                            },
+                          );
                         },
                         child: Transform.rotate(
                           angle: -_mapController.rotation * math.pi / 180,

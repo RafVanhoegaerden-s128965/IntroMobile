@@ -44,7 +44,7 @@ Future<List<Ticket>> getAllActiveTicketsOfUser(String userId) async {
   List<Ticket> tickets = await getAllTicketsOfUser(userId);
   List<Ticket> activeTickets = [];
   for (var ticket in tickets) {
-    if (ticket.active) {
+    if (ticket.active == "true") {
       activeTickets.add(ticket);
     }
   }
@@ -76,7 +76,7 @@ Future<List<Car>> getAllCarsNotInUse(String userId) async {
   List<Ticket> activeTickets = await getAllActiveTicketsOfUser(userId);
   List<Car> cars = await getAllCarsOfUser(userId);
   List<Car> carsNotInUse = [];
-  if (tickets.isEmpty) {
+  if (activeTickets.isEmpty) {
     carsNotInUse = cars;
   } else {
     for (var car in cars) {
@@ -88,6 +88,22 @@ Future<List<Car>> getAllCarsNotInUse(String userId) async {
     }
   }
   return carsNotInUse;
+}
+
+Future<Car> getCarWithId(String carId) async {
+  late Car getCar;
+  final snapshot = await FirebaseFirestore.instance
+      .collection('cars')
+      .where('id', isEqualTo: carId)
+      .get();
+
+  if (snapshot.docs.isNotEmpty) {
+    final carDoc = snapshot.docs.first;
+    final carData = carDoc.data();
+    final car = Car.fromMap(carData);
+    getCar = car;
+  }
+  return getCar;
 }
 
 /// This function gets the streetname.

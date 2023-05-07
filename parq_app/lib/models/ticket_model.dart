@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Ticket {
@@ -10,7 +8,7 @@ class Ticket {
   String lng;
   String street;
   Timestamp time;
-  bool active;
+  String active;
 
   Ticket({
     required this.id,
@@ -45,7 +43,7 @@ class Ticket {
       lng: map['lng'],
       time: map['time'],
       street: map['street'],
-      active: map['active'] ?? false,
+      active: map['active'],
     );
   }
 }
