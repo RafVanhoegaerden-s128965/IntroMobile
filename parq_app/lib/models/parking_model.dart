@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Parking {
   String id;
-  String car;
+  String carId;
   String userId;
   String lat;
   String lng;
@@ -10,7 +10,7 @@ class Parking {
 
   Parking({
     required this.id,
-    required this.car,
+    required this.carId,
     required this.userId,
     required this.lat,
     required this.lng,
@@ -21,7 +21,7 @@ class Parking {
     return {
       'id': id,
       'userId': userId,
-      'car': car,
+      'carId': carId,
       'lat': lat,
       'lng': lng,
       'time': time,
@@ -32,7 +32,7 @@ class Parking {
     return Parking(
       id: map['id'],
       userId: map['userId'],
-      car: map['car'],
+      carId: map['carId'],
       lat: map['lat'],
       lng: map['lng'],
       time: map['time'],

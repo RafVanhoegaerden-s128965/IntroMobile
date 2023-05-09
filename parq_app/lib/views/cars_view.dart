@@ -13,7 +13,6 @@ class CarPage extends StatefulWidget {
   State<CarPage> createState() => _CarPageState();
 }
 
-//BottomNavBar verdwijnt bij deze pagina
 class _CarPageState extends State<CarPage> {
   List<Car> _cars = [];
   final _formKey = GlobalKey<FormState>();
@@ -256,6 +255,7 @@ class _CarPageState extends State<CarPage> {
   }
 
   //Delete car
+  //FIX: bug -- deleted car only dissapears in list after refresh
   void _deleteCar(Car car) {
     deleteCar(car);
     setState(() {

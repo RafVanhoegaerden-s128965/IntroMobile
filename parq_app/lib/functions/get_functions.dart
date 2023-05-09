@@ -5,6 +5,8 @@ import '../models/parking_model.dart';
 import '../models/ticket_model.dart';
 import 'package:http/http.dart' as http;
 
+import '../models/user_model.dart';
+
 /// This function gets all the parkings.
 ///
 /// Returns a list "List<Parking> parking".
@@ -90,6 +92,27 @@ Future<List<Car>> getAllCarsNotInUse(String userId) async {
   return carsNotInUse;
 }
 
+///This function gets the user with the given Id
+///
+///Returns a user
+Future<User> getUserWithId(String userId) async {
+  late User getUser;
+  final snapshot = await FirebaseFirestore.instance
+      .collection('users')
+      .where('id', isEqualTo: userId)
+      .get();
+  if (snapshot.docs.isNotEmpty) {
+    final userDoc = snapshot.docs.first;
+    final userData = userDoc.data();
+    final user = User.fromMap(userData);
+    getUser = user;
+  }
+  return getUser;
+}
+
+///This function gets the car with the given Id
+///
+///Returns a car
 Future<Car> getCarWithId(String carId) async {
   late Car getCar;
   final snapshot = await FirebaseFirestore.instance

@@ -54,7 +54,8 @@ class _RegisterViewState extends State<RegisterView> {
           'id': FirebaseFirestore.instance.collection('users').doc().id,
           'username': username,
           'email': email,
-          'password': hashedPassword
+          'password': hashedPassword,
+          'rating': 5
         });
 
         // Display a snackbar to indicate that registration was successful.

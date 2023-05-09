@@ -13,7 +13,6 @@ import '../models/parking_model.dart';
 import '../models/ticket_model.dart';
 import '../models/user_model.dart';
 import 'cars_view.dart';
-//import 'package:geolocator/geolocator.dart';
 
 class MapPage extends StatefulWidget {
   final String? userId;
@@ -41,19 +40,6 @@ class _MapPageState extends State<MapPage> {
   List<Car> _carsNotInUse = [];
   List<Ticket> _tickets = [];
   List<Ticket> _activeTickets = [];
-
-  // double _latitude = 0;
-  // double _longitude = 0;
-
-  // Get user location
-  // Future<void> _getCurrentLocation() async {
-  //   Position position = await Geolocator.getCurrentPosition(
-  //       desiredAccuracy: LocationAccuracy.high);
-  //   setState(() {
-  //     _latitude = position.latitude;
-  //     _longitude = position.longitude;
-  //   });
-  // }
 
   void _getValues() async {
     String userId = widget.userId.toString();
@@ -84,6 +70,7 @@ class _MapPageState extends State<MapPage> {
       }
     }
 
+    //SetState
     setState(() {
       getUser();
       _parkings = parkings;
@@ -102,102 +89,13 @@ class _MapPageState extends State<MapPage> {
     });
   }
 
-  //Build popup GreenParking
-  Widget _buildPopUpGreenParking(BuildContext context, Parking parking) {
-    DateTime timeData = parking.time.toDate();
-    //TODO: time when leaving
-    String time = "${timeData.hour}:${timeData.minute}";
-    Car? selectedCar;
-
-    return AlertDialog(
-        title: const Text('Parking'),
-        content: SizedBox(
-            height: 105,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                //TODO: show option to set time
-                Text('Start Time: ${time}'),
-                //TODO: show car color
-                Text('Parked: ${parking.car.toString()}'),
-                //TODO: get username
-                Text('User: '),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    //const Text("Choose Car:"),
-                    DropdownButton(
-                      items: _carsNotInUse.isNotEmpty
-                          ? _carsNotInUse.map((car) {
-                              return DropdownMenuItem(
-                                value: car,
-                                child: Text('${car.brand} ${car.type}'),
-                              );
-                            }).toList()
-                          //TODO: Error Handle if list == null
-                          : null,
-                      onChanged: (car) {
-                        setState(() {
-                          selectedCar = car;
-                          log("Selected carId: ${selectedCar?.id.toString()}");
-                        });
-                      },
-                      value: selectedCar,
-                    ),
-                  ],
-                )
-              ],
-            )),
-        actions: <Widget>[
-          ElevatedButton(
-              onPressed: () {
-                // Navigeer naar car page
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => CarPage(
-                      userId: _user!.id,
-                    ),
-                  ),
-                );
-              },
-              child: const Text('Change car')),
-          ElevatedButton(
-            onPressed: () async {
-              String carId = selectedCar!.id;
-              if (carId.isNotEmpty) {
-                String streetName = await getAddress(
-                    double.parse(parking.lat), double.parse(parking.lng));
-                Ticket ticket = Ticket(
-                  id: parking.id,
-                  userId: widget.userId.toString(),
-                  carId: carId,
-                  lat: parking.lat,
-                  lng: parking.lng,
-                  street: streetName,
-                  time: Timestamp.now(),
-                  active: "true",
-                );
-                addTicket(ticket);
-                deleteParking(parking);
-                Navigator.of(context).pop();
-              }
-              setState(() {
-                print('test');
-                _getValues();
-              });
-            },
-            child: const Text('Park'),
-          ),
-        ]);
-  }
-
   @override
   void initState() {
     super.initState();
     _getValues();
-    //_getCurrentLocation();
   }
 
+  //SetTime-Popup
   Future<void> _showSetTimePopUp(
       BuildContext context, Car car, Ticket ticket) async {
     DateTime selectedTime = DateTime.now();
@@ -230,7 +128,7 @@ class _MapPageState extends State<MapPage> {
                         .collection('parkings')
                         .doc()
                         .id,
-                    car: car.brand,
+                    carId: car.id,
                     userId: car.userId,
                     lat: ticket.lat,
                     lng: ticket.lng,
@@ -248,7 +146,7 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
-  //build popup ticket
+  //Ticket-Popup
   Future<Widget> buildPopUpTicket(BuildContext context, Ticket ticket) async {
     DateTime timeData = ticket.time.toDate();
     String time = "${timeData.hour}:${timeData.minute}";
@@ -259,7 +157,7 @@ class _MapPageState extends State<MapPage> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Car: ${car.brand}'),
+          Text('Car: ${car.brand} ${car.type} ${car.color}'),
           Text('Street: ${ticket.street}'),
           Text('Time parked: $time'),
         ],
@@ -282,8 +180,164 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
-  //build popup RedParking
-  Widget _buildPopUpRedParking(BuildContext context, Parking parking) {
+  //Rate-Popup -- TODO: Implement use + finish method
+  Future<Widget> buildRatePopup(BuildContext context, Parking parking) async {
+    final _ratingController = TextEditingController();
+    final rating = _ratingController.value;
+    User user = await getUserWithId(parking.userId);
+    return AlertDialog(
+        title: const Text('Rate'),
+        content: SizedBox(
+            height: 80,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('User: ${user.username}}'),
+                const Text('Rate this user on a scale of 1/5:'),
+                TextFormField(
+                  controller: _ratingController,
+                  decoration: const InputDecoration(labelText: 'Rating'),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value!.isEmpty) {
+                      return 'Please enter a rating.';
+                    }
+                    if (value != '1' ||
+                        value != '2' ||
+                        value != '3' ||
+                        value != '4' ||
+                        value != '5') {
+                      return 'Please enter a valid rating';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            )),
+        actions: <Widget>[
+          ElevatedButton(
+            child: const Text('Rate'),
+            onPressed: () {},
+          ),
+          ElevatedButton(
+            child: const Text('Close'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ]);
+  }
+
+  //GreenParking-PopUp
+  Future<Widget> buildPopUpGreenParking(
+      BuildContext context, Parking parking) async {
+    //Time variables
+    DateTime timeData = parking.time.toDate();
+    //TODO: time when leaving
+    String time = "${timeData.hour}:${timeData.minute}";
+
+    User user = await getUserWithId(parking.userId);
+    Car car = await getCarWithId(parking.carId);
+    //FIX: bug -- changed value doesnt come in field
+    Car? selectedCar;
+
+    return AlertDialog(
+        title: const Text('Parking'),
+        content: SizedBox(
+            height: 105,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                //TODO: show option to set time
+                Text('Start Time: ${time}'),
+                Text('Parked: ${car.brand} ${car.type} ${car.color}'),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('User: ${user.username}'),
+                    Text('Rating: ${user.rating}/5'),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text("Choose Car:"),
+                    DropdownButton(
+                      value: selectedCar,
+                      onChanged: (car) {
+                        setState(() {
+                          selectedCar = car;
+                          log("Selected carId: ${selectedCar?.id.toString()}");
+                        });
+                      },
+                      items: _carsNotInUse.isNotEmpty
+                          ? _carsNotInUse.map((car) {
+                              return DropdownMenuItem(
+                                value: car,
+                                child: Text('${car.brand} ${car.type}'),
+                              );
+                            }).toList()
+                          //TODO: Error Handle if list == null
+                          : null,
+                    ),
+                  ],
+                )
+              ],
+            )),
+        actions: <Widget>[
+          ElevatedButton(
+            child: const Text('Close'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          ElevatedButton(
+            child: const Text('Add car'),
+            onPressed: () {
+              // Navigeer naar car page
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => CarPage(
+                    userId: _user!.id,
+                  ),
+                ),
+              );
+            },
+          ),
+          ElevatedButton(
+            child: const Text('Park'),
+            onPressed: () async {
+              String carId = selectedCar!.id;
+              if (carId.isNotEmpty) {
+                String streetName = await getAddress(
+                    double.parse(parking.lat), double.parse(parking.lng));
+                Ticket ticket = Ticket(
+                  id: parking.id,
+                  userId: widget.userId.toString(),
+                  carId: carId,
+                  lat: parking.lat,
+                  lng: parking.lng,
+                  street: streetName,
+                  time: Timestamp.now(),
+                  active: "true",
+                );
+                addTicket(ticket);
+                deleteParking(parking);
+                Navigator.of(context).pop();
+              }
+              setState(() {
+                print('test');
+                _getValues();
+              });
+            },
+          ),
+        ]);
+  }
+
+  //RedParking
+  Widget buildPopUpRedParking(BuildContext context, Parking parking) {
     return AlertDialog(
         title: const Text('Own Parking'),
         content: SizedBox(
@@ -306,7 +360,6 @@ class _MapPageState extends State<MapPage> {
         options: MapOptions(
             rotation: 0,
             center: LatLng(51.2310, 4.4137),
-            //LatLng(_latitude, _longitude),
             zoom: 16.0,
             maxZoom: 18.0,
             minZoom: 14.0,
@@ -322,8 +375,8 @@ class _MapPageState extends State<MapPage> {
                             .collection('parkings')
                             .doc()
                             .id,
-                        car: _carsNotInUse.isNotEmpty
-                            ? _carsNotInUse.first.brand
+                        carId: _carsNotInUse.isNotEmpty
+                            ? _carsNotInUse.first.id
                             //TODO: Error handling if carlist = empty
                             : "error",
                         userId: widget.userId.toString(),
@@ -370,16 +423,26 @@ class _MapPageState extends State<MapPage> {
                             ? () {
                                 showDialog(
                                     context: context,
-                                    builder: (BuildContext context) =>
-                                        _buildPopUpGreenParking(
-                                            context, parking));
+                                    builder: (BuildContext context) {
+                                      return FutureBuilder<Widget>(
+                                        future: buildPopUpGreenParking(
+                                            context, parking),
+                                        builder: (BuildContext context,
+                                            AsyncSnapshot<Widget> snapshot) {
+                                          if (snapshot.hasData) {
+                                            return snapshot.data!;
+                                          } else {
+                                            return const CircularProgressIndicator();
+                                          }
+                                        },
+                                      );
+                                    });
                               }
                             : () {
                                 showDialog(
                                     context: context,
                                     builder: (BuildContext context) =>
-                                        _buildPopUpRedParking(
-                                            context, parking));
+                                        buildPopUpRedParking(context, parking));
                               }, //TODO: user krijgt andere popup voor zijn eigen parkings??
                         child: Transform.rotate(
                           angle: -_mapController.rotation * math.pi / 180,
