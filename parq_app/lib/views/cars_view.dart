@@ -16,6 +16,7 @@ class CarPage extends StatefulWidget {
 class _CarPageState extends State<CarPage> {
   List<Car> _cars = [];
   final _formKey = GlobalKey<FormState>();
+
   @override
   void initState() {
     super.initState();
@@ -254,13 +255,15 @@ class _CarPageState extends State<CarPage> {
         });
   }
 
-  //Delete car
-  //FIX: bug -- deleted car only dissapears in list after refresh
-  void _deleteCar(Car car) {
-    deleteCar(car);
+  void updateState() {
     setState(() {
       _getValues();
     });
+  }
+
+  //Delete car
+  void _deleteCar(Car car) async {
+    deleteCar(car, updateState);
   }
 
   void _showDeleteCar(Car car) async {

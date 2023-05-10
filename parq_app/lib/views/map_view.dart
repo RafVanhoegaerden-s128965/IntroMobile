@@ -304,7 +304,7 @@ class _MapPageState extends State<MapPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 //TODO: show option to set time
-                Text('Start Time: ${time}'),
+                Text('Start Time: $time'),
                 Text('Parked: ${car.brand} ${car.type} ${car.color}'),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -380,7 +380,6 @@ class _MapPageState extends State<MapPage> {
                   addTicket(ticket);
                   deleteParking(parking);
                   Navigator.of(context).pop();
-
                   await _showRatePopup(context, parking);
                 }
               },
