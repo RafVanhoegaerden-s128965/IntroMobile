@@ -55,7 +55,9 @@ class _RegisterViewState extends State<RegisterView> {
           'username': username,
           'email': email,
           'password': hashedPassword,
-          'rating': 5
+          'totalRatings': 0,
+          'avgRating': 0,
+          'totalRating': 0
         });
 
         // Display a snackbar to indicate that registration was successful.

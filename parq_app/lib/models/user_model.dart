@@ -3,14 +3,18 @@ class User {
   String id;
   String password;
   String username;
-  num rating;
+  num numRatings;
+  num avgRating;
+  num totalRating;
 
   User(
       {required this.email,
       required this.id,
       required this.password,
       required this.username,
-      required this.rating});
+      required this.numRatings,
+      required this.avgRating,
+      required this.totalRating});
 
   Map<String, dynamic> toMap() {
     return {
@@ -18,7 +22,7 @@ class User {
       'id': id,
       'password': password,
       'username': username,
-      'rating': rating
+      'numRatings': numRatings
     };
   }
 
@@ -28,6 +32,8 @@ class User {
         id: map['id'],
         password: map['password'],
         username: map['username'],
-        rating: map['rating']);
+        numRatings: map['numRatings'],
+        avgRating: map['avgRating'],
+        totalRating: map['totalRating']);
   }
 }

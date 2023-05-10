@@ -180,20 +180,27 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
-  //Rate-Popup -- TODO: Implement use + finish method
-  Future<Widget> buildRatePopup(BuildContext context, Parking parking) async {
+  //Rate-Popup -- TODO: finish method
+  Future<void> _showRatePopup(BuildContext context, Parking parking) async {
     final _ratingController = TextEditingController();
-    final rating = _ratingController.value;
     User user = await getUserWithId(parking.userId);
-    return AlertDialog(
-        title: const Text('Rate'),
-        content: SizedBox(
-            height: 80,
+
+    // Use a new context from the parent widget
+    BuildContext dialogContext;
+    // ignore: use_build_context_synchronously
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        dialogContext = context;
+        return AlertDialog(
+          title: const Text('Rate'),
+          content: SizedBox(
+            height: 100,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('User: ${user.username}}'),
+                Text('User: ${user.username}'),
                 const Text('Rate this user on a scale of 1/5:'),
                 TextFormField(
                   controller: _ratingController,
@@ -203,10 +210,10 @@ class _MapPageState extends State<MapPage> {
                     if (value!.isEmpty) {
                       return 'Please enter a rating.';
                     }
-                    if (value != '1' ||
-                        value != '2' ||
-                        value != '3' ||
-                        value != '4' ||
+                    if (value != '1' &&
+                        value != '2' &&
+                        value != '3' &&
+                        value != '4' &&
                         value != '5') {
                       return 'Please enter a valid rating';
                     }
@@ -214,19 +221,64 @@ class _MapPageState extends State<MapPage> {
                   },
                 ),
               ],
-            )),
-        actions: <Widget>[
-          ElevatedButton(
-            child: const Text('Rate'),
-            onPressed: () {},
+            ),
           ),
-          ElevatedButton(
-            child: const Text('Close'),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-        ]);
+          actions: <Widget>[
+            ElevatedButton(
+              child: const Text('Close'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+            ElevatedButton(
+              child: const Text('Rate'),
+              onPressed: () async {
+                String ratingStr = _ratingController.text;
+                int rating = int.parse(ratingStr);
+                await rateUser(user.id, rating);
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> rateUser(String userId, int rating) async {
+    User user = await getUserWithId(userId);
+
+    final numRatings = user.numRatings;
+    final totalRating = user.totalRating;
+    final newNumRatings = numRatings + 1;
+    final newTotalRating = totalRating + rating;
+    final newAvgRating = newTotalRating / newNumRatings;
+    // TODO: Implement rating logic, e.g. save rating to database
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('id', isEqualTo: userId)
+          .get();
+      if (snapshot.docs.isNotEmpty) {
+        final docId = snapshot.docs.first.id;
+
+        await FirebaseFirestore.instance.collection('users').doc(docId).update({
+          'numRatings': newNumRatings,
+          'totalRating': newTotalRating,
+          'avgRating': newAvgRating
+        });
+        setState(() {
+          _getValues();
+          log('numRatings: ${user.numRatings}');
+          log('avgRating: ${user.avgRating}');
+          log('totalRating: ${user.totalRating}');
+        });
+      } else {
+        log('User not found in database.');
+      }
+    } catch (e) {
+      log('Failed to update rating: $e');
+    }
   }
 
   //GreenParking-PopUp
@@ -239,12 +291,13 @@ class _MapPageState extends State<MapPage> {
 
     User user = await getUserWithId(parking.userId);
     Car car = await getCarWithId(parking.carId);
-    //FIX: bug -- changed value doesnt come in field
     Car? selectedCar;
 
-    return AlertDialog(
-        title: const Text('Parking'),
-        content: SizedBox(
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        return AlertDialog(
+          title: const Text('Parking'),
+          content: SizedBox(
             height: 105,
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -257,7 +310,7 @@ class _MapPageState extends State<MapPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('User: ${user.username}'),
-                    Text('Rating: ${user.rating}/5'),
+                    Text('Rating: ${user.avgRating}/5'),
                   ],
                 ),
                 Row(
@@ -270,6 +323,7 @@ class _MapPageState extends State<MapPage> {
                         setState(() {
                           selectedCar = car;
                           log("Selected carId: ${selectedCar?.id.toString()}");
+                          log("Selected car: ${selectedCar?.brand} ${selectedCar?.type}");
                         });
                       },
                       items: _carsNotInUse.isNotEmpty
@@ -279,61 +333,62 @@ class _MapPageState extends State<MapPage> {
                                 child: Text('${car.brand} ${car.type}'),
                               );
                             }).toList()
-                          //TODO: Error Handle if list == null
+                          //TODO: Error Handle if list == null -- if list empty the dropdownmenu wil show all the users cars
                           : null,
                     ),
                   ],
                 )
               ],
-            )),
-        actions: <Widget>[
-          ElevatedButton(
-            child: const Text('Close'),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
+            ),
           ),
-          ElevatedButton(
-            child: const Text('Add car'),
-            onPressed: () {
-              // Navigeer naar car page
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => CarPage(
-                    userId: _user!.id,
-                  ),
-                ),
-              );
-            },
-          ),
-          ElevatedButton(
-            child: const Text('Park'),
-            onPressed: () async {
-              String carId = selectedCar!.id;
-              if (carId.isNotEmpty) {
-                String streetName = await getAddress(
-                    double.parse(parking.lat), double.parse(parking.lng));
-                Ticket ticket = Ticket(
-                  id: parking.id,
-                  userId: widget.userId.toString(),
-                  carId: carId,
-                  lat: parking.lat,
-                  lng: parking.lng,
-                  street: streetName,
-                  time: Timestamp.now(),
-                  active: "true",
-                );
-                addTicket(ticket);
-                deleteParking(parking);
+          actions: <Widget>[
+            ElevatedButton(
+              child: const Text('Close'),
+              onPressed: () {
                 Navigator.of(context).pop();
-              }
-              setState(() {
-                print('test');
-                _getValues();
-              });
-            },
-          ),
-        ]);
+              },
+            ),
+            ElevatedButton(
+              child: const Text('Add car'),
+              onPressed: () {
+                // Navigeer naar car page
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => CarPage(
+                      userId: _user!.id,
+                    ),
+                  ),
+                );
+              },
+            ),
+            ElevatedButton(
+              child: const Text('Park'),
+              onPressed: () async {
+                if (selectedCar != null) {
+                  String streetName = await getAddress(
+                      double.parse(parking.lat), double.parse(parking.lng));
+                  Ticket ticket = Ticket(
+                    id: parking.id,
+                    userId: widget.userId.toString(),
+                    carId: selectedCar!.id,
+                    lat: parking.lat,
+                    lng: parking.lng,
+                    street: streetName,
+                    time: Timestamp.now(),
+                    active: "true",
+                  );
+                  addTicket(ticket);
+                  deleteParking(parking);
+                  Navigator.of(context).pop();
+
+                  await _showRatePopup(context, parking);
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   //RedParking
@@ -401,10 +456,8 @@ class _MapPageState extends State<MapPage> {
           MarkerLayer(
             markers: [
               //User
-              //TODO: use location of users -- function in comment (fix error)
               Marker(
                 point: LatLng(51.2310, 4.4137),
-                //LatLng(_latitude, _longitude),
                 width: 25,
                 height: 25,
                 builder: (context) => Transform.rotate(
