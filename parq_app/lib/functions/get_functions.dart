@@ -4,7 +4,6 @@ import 'package:parq_app/models/car_model.dart';
 import '../models/parking_model.dart';
 import '../models/ticket_model.dart';
 import 'package:http/http.dart' as http;
-
 import '../models/user_model.dart';
 
 /// This function gets all the parkings.
@@ -74,7 +73,6 @@ Future<List<Car>> getAllCarsOfUser(String userId) async {
 ///
 /// Returns a list "List<Cars> carsNotInUse".
 Future<List<Car>> getAllCarsNotInUse(String userId) async {
-  List<Ticket> tickets = await getAllTicketsOfUser(userId);
   List<Ticket> activeTickets = await getAllActiveTicketsOfUser(userId);
   List<Car> cars = await getAllCarsOfUser(userId);
   List<Car> carsNotInUse = [];
@@ -82,10 +80,15 @@ Future<List<Car>> getAllCarsNotInUse(String userId) async {
     carsNotInUse = cars;
   } else {
     for (var car in cars) {
+      bool inUse = false;
       for (var ticket in activeTickets) {
-        if (car.id != ticket.carId) {
-          carsNotInUse.add(car);
+        if (car.id == ticket.carId) {
+          inUse = true;
+          break;
         }
+      }
+      if (!inUse) {
+        carsNotInUse.add(car);
       }
     }
   }

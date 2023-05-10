@@ -286,7 +286,6 @@ class _MapPageState extends State<MapPage> {
       BuildContext context, Parking parking) async {
     //Time variables
     DateTime timeData = parking.time.toDate();
-    //TODO: time when leaving
     String time = "${timeData.hour}:${timeData.minute}";
 
     User user = await getUserWithId(parking.userId);
@@ -303,7 +302,6 @@ class _MapPageState extends State<MapPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                //TODO: show option to set time
                 Text('Start Time: $time'),
                 Text('Parked: ${car.brand} ${car.type} ${car.color}'),
                 Row(
@@ -392,14 +390,59 @@ class _MapPageState extends State<MapPage> {
 
   //RedParking
   Widget buildPopUpRedParking(BuildContext context, Parking parking) {
+    TextEditingController carController = TextEditingController();
+    TextEditingController timeController = TextEditingController();
+
+    carController.text =
+        parking.carId; // voeg de huidige auto-id toe aan de tekstveld
     return AlertDialog(
-        title: const Text('Own Parking'),
-        content: SizedBox(
-            height: 100,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [],
-            )));
+      title: const Text('Own Parking'),
+      content: SizedBox(
+        height: 200,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Text(parking.carId.toString()),
+            TextFormField(
+              controller: timeController,
+              onTap: () {
+                _selectTime(context, timeController);
+              },
+              decoration: const InputDecoration(
+                labelText: 'Time',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                ElevatedButton(onPressed: () {}, child: const Text("Delete")),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(onPressed: () {}, child: const Text("Change"))
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selectTime(
+      BuildContext context, TextEditingController controller) async {
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (pickedTime != null) {
+      final String formattedTime = pickedTime.format(context);
+      controller.text = formattedTime;
+    }
   }
 
   @override
@@ -495,7 +538,7 @@ class _MapPageState extends State<MapPage> {
                                     context: context,
                                     builder: (BuildContext context) =>
                                         buildPopUpRedParking(context, parking));
-                              }, //TODO: user krijgt andere popup voor zijn eigen parkings??
+                              },
                         child: Transform.rotate(
                           angle: -_mapController.rotation * math.pi / 180,
                           child: parking.userId == widget.userId
