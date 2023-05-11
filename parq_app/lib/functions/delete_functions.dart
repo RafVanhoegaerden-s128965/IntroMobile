@@ -15,6 +15,19 @@ void deleteParking(Parking parking) async {
   }
 }
 
+/// This function deletes a parking.
+///
+void deleteTicket(Ticket ticket, Function() callback) async {
+  QuerySnapshot snapshot = await FirebaseFirestore.instance
+      .collection('tickets')
+      .where('id', isEqualTo: ticket.id)
+      .get();
+  if (snapshot.docs.isNotEmpty) {
+    await snapshot.docs.first.reference.delete();
+    callback();
+  }
+}
+
 /// This function deletes a car.
 ///
 void deleteCar(Car car, Function() callback) async {

@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:parq_app/functions/delete_functions.dart';
 import 'package:parq_app/functions/get_functions.dart';
 import '../models/car_model.dart';
 import '../models/ticket_model.dart';
@@ -36,6 +37,17 @@ class _TicketPageState extends State<TicketPage> {
       _tickets = notActiveTickets;
       log("Tickets on ticket page: ${active ? _activeTickets.length : _tickets.length}");
     });
+  }
+
+  void updateState() {
+    setState(() {
+      _getValues();
+    });
+  }
+
+  //Delete ticket
+  void _deleteTicket(Ticket ticket) async {
+    deleteTicket(ticket, updateState);
   }
 
   Future<Widget> buildTicketInfoWidget(Ticket ticket) async {
@@ -135,7 +147,7 @@ class _TicketPageState extends State<TicketPage> {
                                 children: [
                                   IconButton(
                                     onPressed: () {
-                                      //;
+                                      _deleteTicket(ticket);
                                     },
                                     icon: const Icon(
                                       Icons.delete,
