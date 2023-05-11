@@ -8,6 +8,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:parq_app/functions/add_functions.dart';
 import 'package:parq_app/functions/delete_functions.dart';
 import 'package:parq_app/functions/get_functions.dart';
+import 'package:parq_app/main.dart';
 import '../models/car_model.dart';
 import '../models/parking_model.dart';
 import '../models/ticket_model.dart';
@@ -96,8 +97,7 @@ class _MapPageState extends State<MapPage> {
     _getValues();
   }
 
-  //SetTime-Popup
-  Future<void> _showSetTimePopUp(
+  Future<void> showSetTimePopUpTicket(
       BuildContext context, Car car, Ticket ticket) async {
     DateTime selectedTime = DateTime.now();
     await showDialog(
@@ -147,7 +147,6 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
-  //Ticket-Popup
   Future<Widget> buildPopUpTicket(BuildContext context, Ticket ticket) async {
     DateTime timeData = ticket.time.toDate();
     String time = "${timeData.hour}:${timeData.minute}";
@@ -164,17 +163,17 @@ class _MapPageState extends State<MapPage> {
         ],
       ),
       actions: [
-        ElevatedButton(
+        TextButton(
           child: const Text('Close'),
           onPressed: () {
             Navigator.of(context).pop();
           },
         ),
-        ElevatedButton(
+        TextButton(
           child: const Text('Leave'),
           onPressed: () async {
             Navigator.of(context).pop();
-            await _showSetTimePopUp(context, car, ticket);
+            await showSetTimePopUpTicket(context, car, ticket);
           },
         ),
       ],
@@ -182,7 +181,7 @@ class _MapPageState extends State<MapPage> {
   }
 
   //Rate-Popup -- TODO: finish method
-  Future<void> _showRatePopup(BuildContext context, Parking parking) async {
+  Future<void> showRatePopup(BuildContext context, Parking parking) async {
     final _ratingController = TextEditingController();
     User user = await getUserWithId(parking.userId);
 
@@ -282,7 +281,6 @@ class _MapPageState extends State<MapPage> {
     }
   }
 
-  //GreenParking-PopUp
   Future<Widget> buildPopUpGreenParking(
       BuildContext context, Parking parking) async {
     //Time variables
@@ -316,82 +314,100 @@ class _MapPageState extends State<MapPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text("Choose Car:"),
-                    DropdownButton(
-                      value: selectedCar,
-                      onChanged: (car) {
-                        setState(() {
-                          selectedCar = car;
-                          log("Selected carId: ${selectedCar?.id.toString()}");
-                          log("Selected car: ${selectedCar?.brand} ${selectedCar?.type}");
-                        });
-                      },
-                      items: _carsNotInUse.isNotEmpty
-                          ? _carsNotInUse.map((car) {
+                    _carsNotInUse.isNotEmpty
+                        ? DropdownButton(
+                            value: selectedCar,
+                            onChanged: (car) {
+                              setState(() {
+                                selectedCar = car;
+                                log("Selected carId: ${selectedCar?.id.toString()}");
+                                log("Selected car: ${selectedCar?.brand} ${selectedCar?.type}");
+                              });
+                            },
+                            items: _carsNotInUse.map((car) {
                               return DropdownMenuItem(
                                 value: car,
                                 child: Text('${car.brand} ${car.type}'),
                               );
-                            }).toList()
-                          //TODO: Error Handle if list == null -- if list empty the dropdownmenu wil show all the users cars
-                          : null,
-                    ),
+                            }).toList())
+                        : const Text('All cars in use'),
                   ],
                 )
               ],
             ),
           ),
           actions: <Widget>[
-            ElevatedButton(
+            TextButton(
               child: const Text('Close'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
-            ElevatedButton(
-              child: const Text('Add car'),
-              onPressed: () {
-                // Navigeer naar car page
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => CarPage(
-                      userId: _user!.id,
-                    ),
+            _carsNotInUse.isNotEmpty
+                ? TextButton(
+                    child: const Text('Park'),
+                    onPressed: () async {
+                      if (selectedCar != null) {
+                        String streetName = await getAddress(
+                            double.parse(parking.lat),
+                            double.parse(parking.lng));
+                        Ticket ticket = Ticket(
+                          id: parking.id,
+                          userId: widget.userId.toString(),
+                          carId: selectedCar!.id,
+                          lat: parking.lat,
+                          lng: parking.lng,
+                          street: streetName,
+                          time: Timestamp.now(),
+                          active: "true",
+                        );
+                        addTicket(ticket);
+                        deleteParking(parking);
+                        Navigator.of(context).pop();
+                        await showRatePopup(context, parking);
+                      }
+                    },
+                  )
+                : TextButton(
+                    child: const Text('Add car'),
+                    onPressed: () {
+                      // Navigeer naar car page
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => CarPage(
+                            userId: _user!.id,
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
-            ElevatedButton(
-              child: const Text('Park'),
-              onPressed: () async {
-                if (selectedCar != null) {
-                  String streetName = await getAddress(
-                      double.parse(parking.lat), double.parse(parking.lng));
-                  Ticket ticket = Ticket(
-                    id: parking.id,
-                    userId: widget.userId.toString(),
-                    carId: selectedCar!.id,
-                    lat: parking.lat,
-                    lng: parking.lng,
-                    street: streetName,
-                    time: Timestamp.now(),
-                    active: "true",
-                  );
-                  addTicket(ticket);
-                  deleteParking(parking);
-                  Navigator.of(context).pop();
-                  await _showRatePopup(context, parking);
-                }
-              },
-            ),
           ],
         );
       },
     );
   }
 
-  Car? _selectedCar;
   Future<void> buildPopUpRedParking(position, lat, lng) async {
-    _selectedCar = _carsNotInUse.isNotEmpty ? _carsNotInUse[0] : null;
+    Car? selectedCar = _carsNotInUse.isNotEmpty ? _carsNotInUse[0] : null;
+    var userParkings =
+        _parkings.where((parking) => parking.userId == widget.userId);
+    List<Car> carsNoTicketNoParking = [];
+    if (userParkings.isEmpty) {
+      carsNoTicketNoParking = _carsNotInUse;
+    } else {
+      for (var car in _carsNotInUse) {
+        bool inUse = false;
+        for (var parking in userParkings) {
+          if (car.id == parking.carId) {
+            inUse = true;
+            break;
+          }
+        }
+        if (!inUse) {
+          carsNoTicketNoParking.add(car);
+        }
+      }
+    }
     return showDialog<void>(
       context: context,
       barrierDismissible:
@@ -401,20 +417,23 @@ class _MapPageState extends State<MapPage> {
           title: const Text('Chose a car'),
           content: SingleChildScrollView(
             child: ListBody(children: [
-              DropdownButtonFormField(
-                onChanged: (newValue) {
-                  setState(() {
-                    _selectedCar = newValue;
-                  });
-                },
-                value: _selectedCar,
-                items: _carsNotInUse.map((car) {
-                  return DropdownMenuItem(
-                    value: car,
-                    child: Text('${car.brand} ${car.type}'),
-                  );
-                }).toList(),
-              ),
+              carsNoTicketNoParking.isNotEmpty
+                  ? DropdownButtonFormField(
+                      onChanged: (newValue) {
+                        setState(() {
+                          selectedCar = newValue;
+                          log("Selected carId: ${selectedCar?.id.toString()}");
+                          log("Selected car: ${selectedCar?.brand} ${selectedCar?.type}");
+                        });
+                      },
+                      value: selectedCar,
+                      items: carsNoTicketNoParking.map((car) {
+                        return DropdownMenuItem(
+                            value: car,
+                            child: Text('${car.brand} ${car.type}'));
+                      }).toList(),
+                    )
+                  : const Text("All cars in use"),
             ]),
           ),
           actions: [
@@ -426,24 +445,36 @@ class _MapPageState extends State<MapPage> {
                     _active = !_active;
                   });
                 }),
-            TextButton(
-              child: const Text('Set time'),
-              onPressed: () async {
-                Car car = await getCarWithId(_selectedCar!.id);
-                Navigator.of(context).pop();
-                await _showSetTimePopUpAddParking(context, car, lat, lng);
-                setState(() {
-                  _active = !_active;
-                });
-              },
-            ),
+            carsNoTicketNoParking.isNotEmpty
+                ? TextButton(
+                    child: const Text('Set time'),
+                    onPressed: () async {
+                      Car car = await getCarWithId(selectedCar!.id);
+                      Navigator.of(context).pop();
+                      await showSetTimePopUpAddParking(context, car, lat, lng);
+                      setState(() {
+                        _active = !_active;
+                      });
+                    },
+                  )
+                : TextButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => CarPage(
+                            userId: _user!.id,
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text('Add car')),
           ],
         );
       },
     );
   }
 
-  Future<void> _showSetTimePopUpAddParking(
+  Future<void> showSetTimePopUpAddParking(
       BuildContext context, Car car, lat, lng) async {
     DateTime selectedTime = DateTime.now();
     await showDialog(
