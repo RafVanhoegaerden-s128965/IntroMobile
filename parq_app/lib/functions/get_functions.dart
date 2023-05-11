@@ -73,21 +73,36 @@ Future<List<Car>> getAllCarsOfUser(String userId) async {
 ///
 /// Returns a list "List<Cars> carsNotInUse".
 Future<List<Car>> getAllCarsNotInUse(String userId) async {
+  print("wordt gebruikt");
   List<Ticket> activeTickets = await getAllActiveTicketsOfUser(userId);
+  List<Parking> parkings = await getAllParkings();
+  List<Parking> userParkings = [];
+  for (var parking in parkings) {
+    if (parking.userId == userId) {
+      userParkings.add(parking);
+    }
+  }
   List<Car> cars = await getAllCarsOfUser(userId);
   List<Car> carsNotInUse = [];
-  if (activeTickets.isEmpty) {
+  if (activeTickets.isEmpty && userParkings.isEmpty) {
     carsNotInUse = cars;
   } else {
     for (var car in cars) {
-      bool inUse = false;
+      bool inUseT = false;
       for (var ticket in activeTickets) {
         if (car.id == ticket.carId) {
-          inUse = true;
+          inUseT = true;
           break;
         }
       }
-      if (!inUse) {
+      bool inUseP = false;
+      for (var parking in userParkings) {
+        if (car.id == parking.carId) {
+          inUseP = true;
+          break;
+        }
+      }
+      if (!inUseT && !inUseP) {
         carsNotInUse.add(car);
       }
     }

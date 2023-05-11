@@ -389,25 +389,6 @@ class _MapPageState extends State<MapPage> {
 
   Future<void> buildPopUpRedParking(position, lat, lng) async {
     Car? selectedCar = _carsNotInUse.isNotEmpty ? _carsNotInUse[0] : null;
-    var userParkings =
-        _parkings.where((parking) => parking.userId == widget.userId);
-    List<Car> carsNoTicketNoParking = [];
-    if (userParkings.isEmpty) {
-      carsNoTicketNoParking = _carsNotInUse;
-    } else {
-      for (var car in _carsNotInUse) {
-        bool inUse = false;
-        for (var parking in userParkings) {
-          if (car.id == parking.carId) {
-            inUse = true;
-            break;
-          }
-        }
-        if (!inUse) {
-          carsNoTicketNoParking.add(car);
-        }
-      }
-    }
     return showDialog<void>(
       context: context,
       barrierDismissible:
@@ -417,8 +398,8 @@ class _MapPageState extends State<MapPage> {
           title: const Text('Chose a car'),
           content: SingleChildScrollView(
             child: ListBody(children: [
-              carsNoTicketNoParking.isNotEmpty
-                  ? DropdownButtonFormField(
+              _carsNotInUse.isNotEmpty
+                  ? DropdownButton(
                       onChanged: (newValue) {
                         setState(() {
                           selectedCar = newValue;
@@ -427,7 +408,7 @@ class _MapPageState extends State<MapPage> {
                         });
                       },
                       value: selectedCar,
-                      items: carsNoTicketNoParking.map((car) {
+                      items: _carsNotInUse.map((car) {
                         return DropdownMenuItem(
                             value: car,
                             child: Text('${car.brand} ${car.type}'));
@@ -445,7 +426,7 @@ class _MapPageState extends State<MapPage> {
                     _active = !_active;
                   });
                 }),
-            carsNoTicketNoParking.isNotEmpty
+            _carsNotInUse.isNotEmpty
                 ? TextButton(
                     child: const Text('Set time'),
                     onPressed: () async {
