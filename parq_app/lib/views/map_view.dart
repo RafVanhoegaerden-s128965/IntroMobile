@@ -13,6 +13,7 @@ import '../models/parking_model.dart';
 import '../models/ticket_model.dart';
 import '../models/user_model.dart';
 import 'cars_view.dart';
+import 'package:intl/intl.dart';
 
 class MapPage extends StatefulWidget {
   final String? userId;
@@ -290,7 +291,7 @@ class _MapPageState extends State<MapPage> {
 
     User user = await getUserWithId(parking.userId);
     Car car = await getCarWithId(parking.carId);
-    Car? selectedCar;
+    Car? selectedCar = _carsNotInUse.isNotEmpty ? _carsNotInUse[0] : null;
 
     return StatefulBuilder(
       builder: (BuildContext context, StateSetter setState) {
@@ -388,61 +389,107 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
-  //RedParking
-  Widget buildPopUpRedParking(BuildContext context, Parking parking) {
-    TextEditingController carController = TextEditingController();
-    TextEditingController timeController = TextEditingController();
-
-    carController.text =
-        parking.carId; // voeg de huidige auto-id toe aan de tekstveld
-    return AlertDialog(
-      title: const Text('Own Parking'),
-      content: SizedBox(
-        height: 200,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Text(parking.carId.toString()),
-            TextFormField(
-              controller: timeController,
-              onTap: () {
-                _selectTime(context, timeController);
-              },
-              decoration: const InputDecoration(
-                labelText: 'Time',
-                border: OutlineInputBorder(),
+  Car? _selectedCar;
+  Future<void> buildPopUpRedParking(position, lat, lng) async {
+    _selectedCar = _carsNotInUse.isNotEmpty ? _carsNotInUse[0] : null;
+    return showDialog<void>(
+      context: context,
+      barrierDismissible:
+          false, // Clicking outside the dialog will not dismiss it
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Chose a car'),
+          content: SingleChildScrollView(
+            child: ListBody(children: [
+              DropdownButtonFormField(
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedCar = newValue;
+                  });
+                },
+                value: _selectedCar,
+                items: _carsNotInUse.map((car) {
+                  return DropdownMenuItem(
+                    value: car,
+                    child: Text('${car.brand} ${car.type}'),
+                  );
+                }).toList(),
               ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                ElevatedButton(onPressed: () {}, child: const Text("Delete")),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text("Cancel"),
-                ),
-                ElevatedButton(onPressed: () {}, child: const Text("Change"))
-              ],
+            ]),
+          ),
+          actions: [
+            TextButton(
+                child: const Text('Cancel'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  setState(() {
+                    _active = !_active;
+                  });
+                }),
+            TextButton(
+              child: const Text('Set time'),
+              onPressed: () async {
+                Car car = await getCarWithId(_selectedCar!.id);
+                Navigator.of(context).pop();
+                await _showSetTimePopUpAddParking(context, car, lat, lng);
+                setState(() {
+                  _active = !_active;
+                });
+              },
             ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Future<void> _selectTime(
-      BuildContext context, TextEditingController controller) async {
-    final TimeOfDay? pickedTime = await showTimePicker(
+  Future<void> _showSetTimePopUpAddParking(
+      BuildContext context, Car car, lat, lng) async {
+    DateTime selectedTime = DateTime.now();
+    await showDialog(
       context: context,
-      initialTime: TimeOfDay.now(),
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Set Time'),
+          content: SizedBox(
+            height: 200,
+            child: CupertinoDatePicker(
+              initialDateTime: selectedTime,
+              onDateTimeChanged: (DateTime newDateTime) {
+                selectedTime = newDateTime;
+              },
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Save'),
+              onPressed: () {
+                addParking(Parking(
+                    id: FirebaseFirestore.instance
+                        .collection('parkings')
+                        .doc()
+                        .id,
+                    carId: car.id,
+                    userId: car.userId,
+                    lat: lat.toString(),
+                    lng: lng.toString(),
+                    time: Timestamp.fromDate(selectedTime)));
+                Navigator.of(context).pop();
+                setState(() {
+                  _getValues();
+                });
+              },
+            ),
+          ],
+        );
+      },
     );
-
-    if (pickedTime != null) {
-      final String formattedTime = pickedTime.format(context);
-      controller.text = formattedTime;
-    }
   }
 
   @override
@@ -466,25 +513,9 @@ class _MapPageState extends State<MapPage> {
             ),
             keepAlive: true,
             onTap: _active
-                ? (position, latlng) {
-                    Parking parking = Parking(
-                        id: FirebaseFirestore.instance
-                            .collection('parkings')
-                            .doc()
-                            .id,
-                        carId: _carsNotInUse.isNotEmpty
-                            ? _carsNotInUse.first.id
-                            //TODO: Error handling if carlist = empty
-                            : "error",
-                        userId: widget.userId.toString(),
-                        lat: latlng.latitude.toString(),
-                        lng: latlng.longitude.toString(),
-                        time: Timestamp.now());
-                    addParking(parking);
-                    setState(() {
-                      _getValues();
-                      _active = !_active;
-                    });
+                ? (position, latlng) async {
+                    await buildPopUpRedParking(
+                        position, latlng.latitude, latlng.longitude);
                   }
                 : null),
         mapController: _mapController,
@@ -534,10 +565,10 @@ class _MapPageState extends State<MapPage> {
                                     });
                               }
                             : () {
-                                showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) =>
-                                        buildPopUpRedParking(context, parking));
+                                // showDialog(
+                                //     context: context,
+                                //     builder: (BuildContext context) =>
+                                //         );
                               },
                         child: Transform.rotate(
                           angle: -_mapController.rotation * math.pi / 180,
