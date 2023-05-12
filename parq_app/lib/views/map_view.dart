@@ -307,7 +307,7 @@ class _MapPageState extends State<MapPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('User: ${user.username}'),
-                    Text('Rating: ${user.avgRating}/5'),
+                    Text('Rating: ${user.avgRating.toStringAsFixed(1)}/5'),
                   ],
                 ),
                 Row(
