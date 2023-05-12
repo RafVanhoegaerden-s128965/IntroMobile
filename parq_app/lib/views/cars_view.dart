@@ -321,7 +321,7 @@ class _CarPageState extends State<CarPage> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text('Brand: ${car.brand}'),
-                              Text('Type ${car.type}'),
+                              Text('Type: ${car.type}'),
                               Text('Color: ${car.color}'),
                             ],
                           ),
