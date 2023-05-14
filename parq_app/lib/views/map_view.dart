@@ -731,12 +731,12 @@ class _MapPageState extends State<MapPage> {
             heroTag: 'Left',
             child: const Icon(Icons.add_location_alt_outlined),
             onPressed: () {
-              setState(() {
-                //TODO: implement logic
-                // () async {
-                //   await buildPopUpRedParking(currentPosition,
-                //       currentPosition.latitude, currentPosition.longitude);
-                // };
+              buildPopUpRedParking(currentPosition, currentPosition.latitude,
+                      currentPosition.longitude)
+                  .then((_) {
+                setState(() {
+                  log('Current position: ${currentPosition}');
+                });
               });
             },
           ),
