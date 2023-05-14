@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:parq_app/models/car_model.dart';
 import '../models/parking_model.dart';
 import '../models/ticket_model.dart';

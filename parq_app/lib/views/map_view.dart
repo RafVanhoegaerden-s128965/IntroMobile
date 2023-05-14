@@ -28,8 +28,11 @@ class MapPage extends StatefulWidget {
 class _MapPageState extends State<MapPage> {
   User? _user;
 
-  /// Sets adding marker on map active
+  // Sets adding marker on map active
   bool _active = false;
+
+  // Position
+  final currentPosition = LatLng(51.2310, 4.4137);
 
   late Timer _timer;
   //Map rotation
@@ -707,16 +710,38 @@ class _MapPageState extends State<MapPage> {
           ),
         ],
       ),
-      floatingActionButton: GestureDetector(
-        child: FloatingActionButton(
-          child: Icon(_active ? Icons.cancel : Icons.add_location),
-          onPressed: () {
-            setState(() {
-              _active = !_active;
-            });
-          },
+      floatingActionButton: Stack(children: <Widget>[
+        Positioned(
+          bottom: 10,
+          right: 10,
+          child: FloatingActionButton(
+            heroTag: 'Right',
+            child: Icon(_active ? Icons.cancel : Icons.add_location_alt),
+            onPressed: () {
+              setState(() {
+                _active = !_active;
+              });
+            },
+          ),
         ),
-      ),
+        Positioned(
+          bottom: 10,
+          left: 40,
+          child: FloatingActionButton(
+            heroTag: 'Left',
+            child: const Icon(Icons.add_location_alt_outlined),
+            onPressed: () {
+              setState(() {
+                //TODO: implement logic
+                // () async {
+                //   await buildPopUpRedParking(currentPosition,
+                //       currentPosition.latitude, currentPosition.longitude);
+                // };
+              });
+            },
+          ),
+        )
+      ]),
     );
   }
 }

@@ -298,7 +298,7 @@ class _CarPageState extends State<CarPage> {
           'Cars',
         ),
         leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => {Navigator.of(context).pop()},
           icon: const Icon(Icons.arrow_back),
         ),
       ),
