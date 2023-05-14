@@ -142,48 +142,65 @@ class _MapPageState extends State<MapPage> {
   Future<void> showSetTimePopUpTicket(
       BuildContext context, Car car, Ticket ticket) async {
     DateTime selectedTime = DateTime.now();
+    bool isSaveEnabled = false;
+
     await showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Set Time'),
-          content: SizedBox(
-            height: 200,
-            child: CupertinoDatePicker(
-              initialDateTime: selectedTime,
-              onDateTimeChanged: (DateTime newDateTime) {
-                selectedTime = newDateTime;
-              },
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Save'),
-              onPressed: () {
-                addParking(Parking(
-                    id: FirebaseFirestore.instance
-                        .collection('parkings')
-                        .doc()
-                        .id,
-                    carId: car.id,
-                    userId: car.userId,
-                    lat: ticket.lat,
-                    lng: ticket.lng,
-                    time: Timestamp.fromDate(selectedTime)));
-                deActivateTicket(ticket);
-                Navigator.of(context).pop();
-                setState(() {
-                  _getValues();
-                });
-              },
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Set Time'),
+              content: SizedBox(
+                height: 200,
+                child: CupertinoDatePicker(
+                  initialDateTime: selectedTime.add(const Duration(minutes: 2)),
+                  minimumDate: DateTime.now().add(const Duration(minutes: 1)),
+                  onDateTimeChanged: (DateTime newDateTime) {
+                    selectedTime = newDateTime;
+                    setState(() {
+                      isSaveEnabled = newDateTime.isAfter(
+                          DateTime.now().add(const Duration(minutes: 2)));
+                    });
+                  },
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
+                  onPressed: isSaveEnabled
+                      ? () {
+                          addParking(Parking(
+                              id: FirebaseFirestore.instance
+                                  .collection('parkings')
+                                  .doc()
+                                  .id,
+                              carId: car.id,
+                              userId: car.userId,
+                              lat: ticket.lat,
+                              lng: ticket.lng,
+                              time: Timestamp.fromDate(selectedTime)));
+                          deActivateTicket(ticket);
+                          Navigator.of(context).pop();
+                          setState(() {
+                            _getValues();
+                          });
+                        }
+                      : null,
+                  child: Text(
+                    'Save',
+                    style: TextStyle(
+                        color: isSaveEnabled ? Colors.blue : Colors.grey),
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -507,52 +524,67 @@ class _MapPageState extends State<MapPage> {
   Future<void> showSetTimePopUpAddParking(
       BuildContext context, Car car, lat, lng) async {
     DateTime selectedTime = DateTime.now();
+    bool isSaveEnabled = false;
+
     await showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Set Time'),
-          content: SizedBox(
-            height: 200,
-            child: CupertinoDatePicker(
-              initialDateTime: selectedTime,
-              onDateTimeChanged: (DateTime newDateTime) {
-                selectedTime = newDateTime;
-              },
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Set Time'),
+            content: SizedBox(
+              height: 200,
+              child: CupertinoDatePicker(
+                initialDateTime: selectedTime.add(const Duration(minutes: 2)),
+                minimumDate: DateTime.now().add(const Duration(minutes: 1)),
+                onDateTimeChanged: (DateTime newDateTime) {
+                  setState(() {
+                    selectedTime = newDateTime;
+                    isSaveEnabled = selectedTime.isAfter(
+                        DateTime.now().add(const Duration(minutes: 2)));
+                  });
+                },
+              ),
             ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                setState(() {
-                  _active = !_active;
-                });
-              },
-            ),
-            TextButton(
-              child: const Text('Save'),
-              onPressed: () {
-                addParking(Parking(
-                    id: FirebaseFirestore.instance
-                        .collection('parkings')
-                        .doc()
-                        .id,
-                    carId: car.id,
-                    userId: car.userId,
-                    lat: lat.toString(),
-                    lng: lng.toString(),
-                    time: Timestamp.fromDate(selectedTime)));
-                Navigator.of(context).pop();
-                setState(() {
-                  _getValues();
-                  _active = !_active;
-                });
-              },
-            ),
-          ],
-        );
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  setState(() {
+                    _active = !_active;
+                  });
+                },
+              ),
+              TextButton(
+                style: ButtonStyle(
+                  foregroundColor: MaterialStateProperty.all(
+                      isSaveEnabled ? Colors.blue : Colors.grey),
+                ),
+                onPressed: isSaveEnabled
+                    ? () {
+                        addParking(Parking(
+                            id: FirebaseFirestore.instance
+                                .collection('parkings')
+                                .doc()
+                                .id,
+                            carId: car.id,
+                            userId: car.userId,
+                            lat: lat.toString(),
+                            lng: lng.toString(),
+                            time: Timestamp.fromDate(selectedTime)));
+                        Navigator.of(context).pop();
+                        setState(() {
+                          _getValues();
+                          _active = !_active;
+                        });
+                      }
+                    : null,
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        });
       },
     );
   }
