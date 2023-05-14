@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -29,6 +30,8 @@ class _MapPageState extends State<MapPage> {
 
   /// Sets adding marker on map active
   bool _active = false;
+
+  late Timer _timer;
   //Map rotation
   final MapController _mapController = MapController();
   //Icons
@@ -94,7 +97,21 @@ class _MapPageState extends State<MapPage> {
   @override
   void initState() {
     super.initState();
-    _getValues();
+    _timer = Timer.periodic(const Duration(seconds: 1), (Timer t) {
+      if (mounted) {
+        _getValues();
+      } else {
+        // cancel the timer
+        _timer.cancel();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // cancel the timer
+    _timer.cancel();
+    super.dispose();
   }
 
   Future<void> showSetTimePopUpTicket(

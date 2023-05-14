@@ -73,7 +73,6 @@ Future<List<Car>> getAllCarsOfUser(String userId) async {
 ///
 /// Returns a list "List<Cars> carsNotInUse".
 Future<List<Car>> getAllCarsNotInUse(String userId) async {
-  print("wordt gebruikt");
   List<Ticket> activeTickets = await getAllActiveTicketsOfUser(userId);
   List<Parking> parkings = await getAllParkings();
   List<Parking> userParkings = [];
