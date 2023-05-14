@@ -106,6 +106,15 @@ class _MapPageState extends State<MapPage> {
       // log("Auto refresh values: [ ALL PARKINGS: ${_parkings.length} ] - [ USER PARKINGS: ${userParkings.length} ] - [ ACTIVE USER TICKETS:  ${_activeTickets.length} ]");
       //Print with colors
       log("\x1b[36mAuto refresh values: \x1b[0m[ \x1b[32mALL PARKINGS: ${_parkings.length}\x1b[0m ] - [ \x1b[31mUSER PARKINGS: ${userParkings.length}\x1b[0m ] - [ \x1b[34mACTIVE USER TICKETS: ${_activeTickets.length}\x1b[0m ]");
+
+      DateTime now = DateTime.now();
+      for (var parking in _parkings) {
+        DateTime parkingTime = parking.time.toDate();
+        if (parkingTime.isBefore(now)) {
+          deleteParking(parking);
+          _getValues();
+        }
+      }
     });
   }
 
@@ -422,67 +431,74 @@ class _MapPageState extends State<MapPage> {
 
   Future<void> buildPopUpRedParking(position, lat, lng) async {
     Car? selectedCar = _carsNotInUse.isNotEmpty ? _carsNotInUse[0] : null;
+
     return showDialog<void>(
       context: context,
-      barrierDismissible:
-          false, // Clicking outside the dialog will not dismiss it
+      barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Chose a car'),
-          content: SingleChildScrollView(
-            child: ListBody(children: [
-              _carsNotInUse.isNotEmpty
-                  ? DropdownButton(
-                      onChanged: (newValue) {
-                        setState(() {
-                          selectedCar = newValue;
-                          log("Selected carId: ${selectedCar?.id.toString()}");
-                          log("Selected car: ${selectedCar?.brand} ${selectedCar?.type}");
-                        });
-                      },
-                      value: selectedCar,
-                      items: _carsNotInUse.map((car) {
-                        return DropdownMenuItem(
-                            value: car,
-                            child: Text('${car.brand} ${car.type}'));
-                      }).toList(),
-                    )
-                  : const Text("All cars in use"),
-            ]),
-          ),
-          actions: [
-            TextButton(
-                child: const Text('Cancel'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  setState(() {
-                    _active = !_active;
-                  });
-                }),
-            _carsNotInUse.isNotEmpty
-                ? TextButton(
-                    child: const Text('Set time'),
-                    onPressed: () async {
-                      Car car = await getCarWithId(selectedCar!.id);
-                      Navigator.of(context).pop();
-                      await showSetTimePopUpAddParking(context, car, lat, lng);
-                      setState(() {
-                        _active = !_active;
-                      });
-                    },
-                  )
-                : TextButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => CarPage(
-                            userId: _user!.id,
-                          ),
-                        ),
-                      );
-                    },
-                    child: const Text('Add car')),
-          ],
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: const Text('Choose a car'),
+              content: SingleChildScrollView(
+                child: ListBody(
+                  children: [
+                    _carsNotInUse.isNotEmpty
+                        ? DropdownButton(
+                            value: selectedCar,
+                            onChanged: (car) {
+                              setState(() {
+                                selectedCar = car;
+                                log("Selected carId: ${selectedCar?.id.toString()}");
+                                log("Selected car: ${selectedCar?.brand} ${selectedCar?.type}");
+                              });
+                            },
+                            items: _carsNotInUse.map((car) {
+                              return DropdownMenuItem(
+                                value: car,
+                                child: Text('${car.brand} ${car.type}'),
+                              );
+                            }).toList(),
+                          )
+                        : const Text("All cars in use"),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    setState(() {
+                      _active = !_active;
+                    });
+                  },
+                ),
+                _carsNotInUse.isNotEmpty
+                    ? TextButton(
+                        child: const Text('Set time'),
+                        onPressed: () async {
+                          Car car = await getCarWithId(selectedCar!.id);
+                          Navigator.of(context).pop();
+                          await showSetTimePopUpAddParking(
+                              context, car, lat, lng);
+                        },
+                      )
+                    : TextButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => CarPage(
+                                userId: _user!.id,
+                              ),
+                            ),
+                          );
+                        },
+                        child: const Text('Add car'),
+                      ),
+              ],
+            );
+          },
         );
       },
     );
@@ -510,6 +526,9 @@ class _MapPageState extends State<MapPage> {
               child: const Text('Cancel'),
               onPressed: () {
                 Navigator.of(context).pop();
+                setState(() {
+                  _active = !_active;
+                });
               },
             ),
             TextButton(
@@ -528,6 +547,7 @@ class _MapPageState extends State<MapPage> {
                 Navigator.of(context).pop();
                 setState(() {
                   _getValues();
+                  _active = !_active;
                 });
               },
             ),
