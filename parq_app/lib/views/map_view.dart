@@ -592,6 +592,152 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
+  Future<void> buildPopUpRedEdit(Parking parking, Car car) async {
+    DateTime selectedTime = parking.time.toDate();
+    bool isSaveEnabled = false;
+
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: const Text('Own parking'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Car: ${car.brand} ${car.type} ${car.color}'),
+                  Row(
+                    children: [
+                      const Text('Time leaving: '),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            showModalBottomSheet(
+                              context: context,
+                              builder: (BuildContext builder) {
+                                return SizedBox(
+                                  height: MediaQuery.of(context)
+                                          .copyWith()
+                                          .size
+                                          .height /
+                                      3,
+                                  child: Column(
+                                    children: [
+                                      Expanded(
+                                        child: CupertinoDatePicker(
+                                          mode: CupertinoDatePickerMode
+                                              .dateAndTime,
+                                          initialDateTime: selectedTime,
+                                          minimumDate: DateTime.now()
+                                              .add(const Duration(minutes: 1)),
+                                          onDateTimeChanged:
+                                              (DateTime newDateTime) {
+                                            setState(() {
+                                              isSaveEnabled = newDateTime
+                                                  .isAfter(DateTime.now().add(
+                                                      const Duration(
+                                                          minutes: 2)));
+                                              if (isSaveEnabled) {
+                                                selectedTime = newDateTime;
+                                              }
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      CupertinoButton(
+                                        child: const Text('Close'),
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                          child: Text(
+                            '$selectedTime',
+                            style: const TextStyle(
+                              decoration: TextDecoration.underline,
+                              color: Colors.blue,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
+                  child: const Text('Delete'),
+                  onPressed: () {
+                    deleteParking(parking);
+                    setState(() {
+                      _getValues();
+                    });
+                    Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
+                  onPressed: isSaveEnabled
+                      ? () {
+                          setState(() {
+                            _editParking(
+                                parking, Timestamp.fromDate(selectedTime));
+                            _getValues();
+                          });
+                          Navigator.of(context).pop();
+                        }
+                      : null,
+                  child: Text(
+                    'Change time',
+                    style: TextStyle(
+                        color: isSaveEnabled ? Colors.blue : Colors.grey),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _editParking(Parking parking, Timestamp time) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('parkings')
+          .where('id', isEqualTo: parking.id)
+          .get();
+      if (snapshot.docs.isNotEmpty) {
+        final docId = snapshot.docs.first.id;
+        await FirebaseFirestore.instance
+            .collection('parkings')
+            .doc(docId)
+            .update({
+          'time': time,
+        });
+        setState(() {
+          _getValues();
+        });
+      } else {
+        log('Car not found in database.');
+      }
+    } catch (e) {
+      log('Failed to update car: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -664,11 +810,9 @@ class _MapPageState extends State<MapPage> {
                                       );
                                     });
                               }
-                            : () {
-                                // showDialog(
-                                //     context: context,
-                                //     builder: (BuildContext context) =>
-                                //         );
+                            : () async {
+                                Car? car = await getCarWithId(parking.carId);
+                                buildPopUpRedEdit(parking, car);
                               },
                         child: Transform.rotate(
                           angle: -_mapController.rotation * math.pi / 180,
