@@ -48,30 +48,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    // return Scaffold(
-    //   appBar: AppBar(
-    //     title: const Text(
-    //       'Settings',
-    //     ),
-    //   ),
-    //   body: Center(
-    //     child: Column(
-    //       children: [
-    //         // Toon de userId die werd doorgegeven vanuit HomePage
-    //         Text(userId.toString()),
-    //         // Uitlogknop
-    //         TextButton(
-    //           onPressed: () {
-    //             // Navigate to the register page.
-    //             Navigator.of(context)
-    //                 .pushNamedAndRemoveUntil(loginRoute, (route) => false);
-    //           },
-    //           child: const Text('Uitloggen'),
-    //         ),
-    //       ],
-    //     ),
-    //   ),
-    // );
     return Scaffold(
       appBar: AppBar(
         title: const Text(

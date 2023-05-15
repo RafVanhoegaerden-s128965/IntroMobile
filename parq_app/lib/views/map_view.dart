@@ -30,6 +30,8 @@ class _MapPageState extends State<MapPage> {
 
   // Sets adding marker on map active
   bool _active = false;
+  // Sets filtered markers active
+  bool isFiltered = false;
 
   // Position
   final currentPosition = LatLng(51.2310, 4.4137);
@@ -49,6 +51,9 @@ class _MapPageState extends State<MapPage> {
   List<Ticket> _tickets = [];
   List<Ticket> _activeTickets = [];
 
+  List<Marker> allMarkers = [];
+  List<Marker> filteredMarkers = [];
+
   void _getValues() async {
     String userId = widget.userId.toString();
     List<Parking> parkings = await getAllParkings();
@@ -56,7 +61,8 @@ class _MapPageState extends State<MapPage> {
     List<Ticket> tickets = await getAllTicketsOfUser(userId);
     List<Ticket> activeTickets = await getAllActiveTicketsOfUser(userId);
     List<Car> carsNotInUse = await getAllCarsNotInUse(userId);
-    //Get users
+
+    //Get user
     Future<void> getUser() async {
       try {
         final snapshot = await FirebaseFirestore.instance
@@ -121,10 +127,44 @@ class _MapPageState extends State<MapPage> {
     });
   }
 
+  void handleFilter() {
+    setState(() {
+      isFiltered = !isFiltered;
+      //TODO: add ticket marker
+      filteredMarkers = isFiltered
+          ? [
+              Marker(
+                point: LatLng(51.2310, 4.4137),
+                width: 25,
+                height: 25,
+                builder: (context) => Transform.rotate(
+                  angle: -(_mapController.rotation - 15) * math.pi / 180,
+                  child: _arrowIcon,
+                ),
+              ),
+            ]
+          : List.from(allMarkers);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     _getValues();
+    //TODO: add builded markers
+    allMarkers = [
+      Marker(
+        point: LatLng(51.2310, 4.4137),
+        width: 25,
+        height: 25,
+        builder: (context) => Transform.rotate(
+          angle: -(_mapController.rotation - 15) * math.pi / 180,
+          child: _arrowIcon,
+        ),
+      ),
+    ];
+    filteredMarkers = List.from(allMarkers);
+
     _timer = Timer.periodic(const Duration(seconds: 1), (Timer t) {
       if (mounted) {
         _getMapMarkers();
@@ -490,7 +530,9 @@ class _MapPageState extends State<MapPage> {
                   onPressed: () {
                     Navigator.of(context).pop();
                     setState(() {
-                      _active = !_active;
+                      if (_active) {
+                        _active = !_active;
+                      }
                     });
                   },
                 ),
@@ -555,7 +597,9 @@ class _MapPageState extends State<MapPage> {
                 onPressed: () {
                   Navigator.of(context).pop();
                   setState(() {
-                    _active = !_active;
+                    if (_active) {
+                      _active = !_active;
+                    }
                   });
                 },
               ),
@@ -579,7 +623,9 @@ class _MapPageState extends State<MapPage> {
                         Navigator.of(context).pop();
                         setState(() {
                           _getValues();
-                          _active = !_active;
+                          if (_active) {
+                            _active = !_active;
+                          }
                         });
                       }
                     : null,
@@ -746,112 +792,120 @@ class _MapPageState extends State<MapPage> {
           'Map',
         ),
       ),
-      body: FlutterMap(
-        options: MapOptions(
-            rotation: 0,
-            center: LatLng(51.2310, 4.4137),
-            zoom: 16.0,
-            maxZoom: 18.0,
-            minZoom: 14.0,
-            maxBounds: LatLngBounds(
-              LatLng(51.2210, 4.4037),
-              LatLng(51.2410, 4.4237),
-            ),
-            keepAlive: true,
-            onTap: _active
-                ? (position, latlng) async {
-                    await buildPopUpRedParking(
-                        position, latlng.latitude, latlng.longitude);
-                  }
-                : null),
-        mapController: _mapController,
+      body: Column(
         children: [
-          //Tiles
-          TileLayer(
-            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.example.app',
-          ),
-          //Maker
-          MarkerLayer(
-            markers: [
-              //User
-              Marker(
-                point: LatLng(51.2310, 4.4137),
-                width: 25,
-                height: 25,
-                builder: (context) => Transform.rotate(
-                  angle: -(_mapController.rotation - 15) * math.pi / 180,
-                  child: _arrowIcon,
+          Expanded(
+            child: FlutterMap(
+              options: MapOptions(
+                  rotation: 0,
+                  center: LatLng(51.2310, 4.4137),
+                  zoom: 16.0,
+                  maxZoom: 18.0,
+                  minZoom: 14.0,
+                  maxBounds: LatLngBounds(
+                    LatLng(51.2210, 4.4037),
+                    LatLng(51.2410, 4.4237),
+                  ),
+                  keepAlive: true,
+                  onTap: _active
+                      ? (position, latlng) async {
+                          await buildPopUpRedParking(
+                              position, latlng.latitude, latlng.longitude);
+                        }
+                      : null),
+              mapController: _mapController,
+              children: [
+                //Tiles
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.example.app',
                 ),
-              ),
-              //Parking markers op de map
-              ..._parkings.map((parking) => Marker(
-                    point: LatLng(
-                        double.parse(parking.lat), double.parse(parking.lng)),
-                    width: 35,
-                    height: 35,
-                    builder: (context) => GestureDetector(
-                        onTap: parking.userId != widget.userId
-                            ? () {
-                                showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return FutureBuilder<Widget>(
-                                        future: buildPopUpGreenParking(
-                                            context, parking),
-                                        builder: (BuildContext context,
-                                            AsyncSnapshot<Widget> snapshot) {
-                                          if (snapshot.hasData) {
-                                            return snapshot.data!;
-                                          } else {
-                                            return const CircularProgressIndicator();
-                                          }
-                                        },
-                                      );
-                                    });
-                              }
-                            : () async {
-                                Car? car = await getCarWithId(parking.carId);
-                                buildPopUpRedEdit(parking, car);
-                              },
-                        child: Transform.rotate(
-                          angle: -_mapController.rotation * math.pi / 180,
-                          child: parking.userId == widget.userId
-                              ? _parkIconUser
-                              : _parkIcon,
-                        )),
-                  )),
-              ..._activeTickets.map((ticket) => Marker(
-                    point: LatLng(
-                        double.parse(ticket.lat), double.parse(ticket.lng)),
-                    width: 35,
-                    height: 35,
-                    builder: (context) => GestureDetector(
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return FutureBuilder<Widget>(
-                                future: buildPopUpTicket(context, ticket),
-                                builder: (BuildContext context,
-                                    AsyncSnapshot<Widget> snapshot) {
-                                  if (snapshot.hasData) {
-                                    return snapshot.data!;
-                                  } else {
-                                    return const CircularProgressIndicator();
+                //Maker TODO: implement filteredMarkers -- first add correct markers to the lists
+                MarkerLayer(markers:
+                    //filteredMarkers
+                    [
+                  //User
+                  Marker(
+                    point: LatLng(51.2310, 4.4137),
+                    width: 25,
+                    height: 25,
+                    builder: (context) => Transform.rotate(
+                      angle: -(_mapController.rotation - 15) * math.pi / 180,
+                      child: _arrowIcon,
+                    ),
+                  ),
+                  //Parking markers op de map
+                  ..._parkings.map((parking) => Marker(
+                        point: LatLng(double.parse(parking.lat),
+                            double.parse(parking.lng)),
+                        width: 35,
+                        height: 35,
+                        builder: (context) => GestureDetector(
+                            onTap: parking.userId != widget.userId
+                                ? () {
+                                    showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return FutureBuilder<Widget>(
+                                            future: buildPopUpGreenParking(
+                                                context, parking),
+                                            builder: (BuildContext context,
+                                                AsyncSnapshot<Widget>
+                                                    snapshot) {
+                                              if (snapshot.hasData) {
+                                                return snapshot.data!;
+                                              } else {
+                                                return const CircularProgressIndicator();
+                                              }
+                                            },
+                                          );
+                                        });
                                   }
+                                : () async {
+                                    Car? car =
+                                        await getCarWithId(parking.carId);
+                                    buildPopUpRedEdit(parking, car);
+                                  },
+                            child: Transform.rotate(
+                              angle: -_mapController.rotation * math.pi / 180,
+                              child: parking.userId == widget.userId
+                                  ? _parkIconUser
+                                  : _parkIcon,
+                            )),
+                      )),
+                  ..._activeTickets.map((ticket) => Marker(
+                        point: LatLng(
+                            double.parse(ticket.lat), double.parse(ticket.lng)),
+                        width: 35,
+                        height: 35,
+                        builder: (context) => GestureDetector(
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return FutureBuilder<Widget>(
+                                    future: buildPopUpTicket(context, ticket),
+                                    builder: (BuildContext context,
+                                        AsyncSnapshot<Widget> snapshot) {
+                                      if (snapshot.hasData) {
+                                        return snapshot.data!;
+                                      } else {
+                                        return const CircularProgressIndicator();
+                                      }
+                                    },
+                                  );
                                 },
                               );
                             },
-                          );
-                        },
-                        child: Transform.rotate(
-                          angle: -_mapController.rotation * math.pi / 180,
-                          child: _carIcon,
-                        )),
-                  ))
-            ],
-          ),
+                            child: Transform.rotate(
+                              angle: -_mapController.rotation * math.pi / 180,
+                              child: _carIcon,
+                            )),
+                      ))
+                ]),
+              ],
+            ),
+          )
         ],
       ),
       floatingActionButton: Stack(children: <Widget>[
@@ -884,7 +938,27 @@ class _MapPageState extends State<MapPage> {
               });
             },
           ),
-        )
+        ),
+        Positioned(
+          top: 130,
+          right: 10,
+          child: TextButton(
+            //TODO: fix filter logic
+            onPressed: handleFilter,
+            style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.all<Color>(
+                isFiltered ? Colors.blue : Colors.grey,
+              ),
+            ),
+            child: Text(
+              isFiltered ? 'Unfilter' : 'Filter',
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
       ]),
     );
   }
