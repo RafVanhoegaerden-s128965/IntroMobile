@@ -5,6 +5,8 @@ import 'package:parq_app/functions/add_functions.dart';
 import 'package:parq_app/functions/delete_functions.dart';
 import 'package:parq_app/functions/get_functions.dart';
 import 'package:parq_app/models/car_model.dart';
+import 'package:parq_app/models/parking_model.dart';
+import 'package:parq_app/models/ticket_model.dart';
 
 class CarPage extends StatefulWidget {
   final String userId;
@@ -15,6 +17,7 @@ class CarPage extends StatefulWidget {
 
 class _CarPageState extends State<CarPage> {
   List<Car> _cars = [];
+  List<Car> _carsNotInUse = [];
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -26,9 +29,12 @@ class _CarPageState extends State<CarPage> {
   //Get cars
   void _getValues() async {
     List<Car> cars = await getAllCarsOfUser(widget.userId.toString());
+    List<Car> carsNotInUse = await getAllCarsNotInUse(widget.userId.toString());
     setState(() {
       _cars = cars;
+      _carsNotInUse = carsNotInUse;
       log("Cars: ${_cars.length}");
+      log("Cars not in use: ${_carsNotInUse.length}");
     });
   }
 
@@ -267,27 +273,82 @@ class _CarPageState extends State<CarPage> {
   }
 
   void _showDeleteCar(Car car) async {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Delete Car'),
-            content: Text('Are you sure you want to delete ${car.brand}?'),
-            actions: [
-              TextButton(
-                child: const Text('Cancel'),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-              TextButton(
-                child: const Text('Delete'),
-                onPressed: () {
-                  _deleteCar(car);
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          );
-        });
+    bool carIsNotInUse = false;
+    for (var c in _carsNotInUse) {
+      if (car.id == c.id) {
+        carIsNotInUse = true;
+      }
+    }
+
+    carIsNotInUse
+        ? showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Delete Car'),
+                content: Text('Are you sure you want to delete ${car.brand}?'),
+                actions: [
+                  TextButton(
+                    child: const Text('Cancel'),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  TextButton(
+                    child: const Text('Delete'),
+                    onPressed: () async {
+                      List<Ticket> tickets =
+                          await getAllTicketsOfUser(widget.userId.toString());
+                      for (var t in tickets) {
+                        if (t.carId == car.id) {
+                          deleteTicket(t, () => updateState());
+                        }
+                      }
+                      _deleteCar(car);
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            })
+        : showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('This car is in use'),
+                content: Text(
+                    'Do you want to delete ${car.brand} ${car.type} and all tickets or active parking?'),
+                actions: [
+                  TextButton(
+                    child: const Text('Cancel'),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  TextButton(
+                    child: const Text('Delete'),
+                    onPressed: () async {
+                      List<Parking> parkings = await getAllParkings();
+                      Parking? parkingOfCar;
+                      for (var parking in parkings) {
+                        if (parking.carId == car.id) {
+                          parkingOfCar = parking;
+                        }
+                      }
+                      if (parkingOfCar != null) {
+                        deleteParking(parkingOfCar);
+                      }
+
+                      List<Ticket> tickets =
+                          await getAllTicketsOfUser(widget.userId.toString());
+                      for (var t in tickets) {
+                        if (t.carId == car.id) {
+                          deleteTicket(t, () => updateState());
+                        }
+                      }
+                      _deleteCar(car);
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            });
   }
 
   @override
