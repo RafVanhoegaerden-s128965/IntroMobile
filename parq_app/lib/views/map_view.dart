@@ -30,8 +30,9 @@ class _MapPageState extends State<MapPage> {
 
   // Sets adding marker on map active
   bool _active = false;
-  // Sets filtered markers active
-  bool isFiltered = false;
+
+  // Sets filtered markers on map active
+  bool _isFiltered = false;
 
   // Position
   final currentPosition = LatLng(51.2310, 4.4137);
@@ -50,9 +51,6 @@ class _MapPageState extends State<MapPage> {
   List<Car> _carsNotInUse = [];
   List<Ticket> _tickets = [];
   List<Ticket> _activeTickets = [];
-
-  List<Marker> allMarkers = [];
-  List<Marker> filteredMarkers = [];
 
   void _getValues() async {
     String userId = widget.userId.toString();
@@ -127,44 +125,10 @@ class _MapPageState extends State<MapPage> {
     });
   }
 
-  void handleFilter() {
-    setState(() {
-      isFiltered = !isFiltered;
-      //TODO: add ticket marker
-      filteredMarkers = isFiltered
-          ? [
-              Marker(
-                point: LatLng(51.2310, 4.4137),
-                width: 25,
-                height: 25,
-                builder: (context) => Transform.rotate(
-                  angle: -(_mapController.rotation - 15) * math.pi / 180,
-                  child: _arrowIcon,
-                ),
-              ),
-            ]
-          : List.from(allMarkers);
-    });
-  }
-
   @override
   void initState() {
     super.initState();
     _getValues();
-    //TODO: add builded markers
-    allMarkers = [
-      Marker(
-        point: LatLng(51.2310, 4.4137),
-        width: 25,
-        height: 25,
-        builder: (context) => Transform.rotate(
-          angle: -(_mapController.rotation - 15) * math.pi / 180,
-          child: _arrowIcon,
-        ),
-      ),
-    ];
-    filteredMarkers = List.from(allMarkers);
-
     _timer = Timer.periodic(const Duration(seconds: 1), (Timer t) {
       if (mounted) {
         _getMapMarkers();
@@ -821,88 +785,147 @@ class _MapPageState extends State<MapPage> {
                   userAgentPackageName: 'com.example.app',
                 ),
                 //Maker TODO: implement filteredMarkers -- first add correct markers to the lists
-                MarkerLayer(markers:
-                    //filteredMarkers
-                    [
-                  //User
-                  Marker(
-                    point: LatLng(51.2310, 4.4137),
-                    width: 25,
-                    height: 25,
-                    builder: (context) => Transform.rotate(
-                      angle: -(_mapController.rotation - 15) * math.pi / 180,
-                      child: _arrowIcon,
-                    ),
-                  ),
-                  //Parking markers op de map
-                  ..._parkings.map((parking) => Marker(
-                        point: LatLng(double.parse(parking.lat),
-                            double.parse(parking.lng)),
-                        width: 35,
-                        height: 35,
-                        builder: (context) => GestureDetector(
-                            onTap: parking.userId != widget.userId
-                                ? () {
-                                    showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return FutureBuilder<Widget>(
-                                            future: buildPopUpGreenParking(
-                                                context, parking),
-                                            builder: (BuildContext context,
-                                                AsyncSnapshot<Widget>
-                                                    snapshot) {
-                                              if (snapshot.hasData) {
-                                                return snapshot.data!;
-                                              } else {
-                                                return const CircularProgressIndicator();
-                                              }
+                MarkerLayer(
+                    markers: !_isFiltered
+                        ? [
+                            //User
+                            Marker(
+                              point: LatLng(51.2310, 4.4137),
+                              width: 25,
+                              height: 25,
+                              builder: (context) => Transform.rotate(
+                                angle: -(_mapController.rotation - 15) *
+                                    math.pi /
+                                    180,
+                                child: _arrowIcon,
+                              ),
+                            ),
+                            //Parking markers op de map
+                            ..._parkings.map((parking) => Marker(
+                                  point: LatLng(double.parse(parking.lat),
+                                      double.parse(parking.lng)),
+                                  width: 35,
+                                  height: 35,
+                                  builder: (context) => GestureDetector(
+                                      onTap: parking.userId != widget.userId
+                                          ? () {
+                                              showDialog(
+                                                  context: context,
+                                                  builder:
+                                                      (BuildContext context) {
+                                                    return FutureBuilder<
+                                                        Widget>(
+                                                      future:
+                                                          buildPopUpGreenParking(
+                                                              context, parking),
+                                                      builder: (BuildContext
+                                                              context,
+                                                          AsyncSnapshot<Widget>
+                                                              snapshot) {
+                                                        if (snapshot.hasData) {
+                                                          return snapshot.data!;
+                                                        } else {
+                                                          return const CircularProgressIndicator();
+                                                        }
+                                                      },
+                                                    );
+                                                  });
+                                            }
+                                          : () async {
+                                              Car? car = await getCarWithId(
+                                                  parking.carId);
+                                              buildPopUpRedEdit(parking, car);
                                             },
-                                          );
-                                        });
-                                  }
-                                : () async {
-                                    Car? car =
-                                        await getCarWithId(parking.carId);
-                                    buildPopUpRedEdit(parking, car);
-                                  },
-                            child: Transform.rotate(
-                              angle: -_mapController.rotation * math.pi / 180,
-                              child: parking.userId == widget.userId
-                                  ? _parkIconUser
-                                  : _parkIcon,
-                            )),
-                      )),
-                  ..._activeTickets.map((ticket) => Marker(
-                        point: LatLng(
-                            double.parse(ticket.lat), double.parse(ticket.lng)),
-                        width: 35,
-                        height: 35,
-                        builder: (context) => GestureDetector(
-                            onTap: () {
-                              showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return FutureBuilder<Widget>(
-                                    future: buildPopUpTicket(context, ticket),
-                                    builder: (BuildContext context,
-                                        AsyncSnapshot<Widget> snapshot) {
-                                      if (snapshot.hasData) {
-                                        return snapshot.data!;
-                                      } else {
-                                        return const CircularProgressIndicator();
-                                      }
-                                    },
-                                  );
-                                },
-                              );
-                            },
-                            child: Transform.rotate(
-                              angle: -_mapController.rotation * math.pi / 180,
-                              child: _carIcon,
-                            )),
-                      ))
-                ]),
+                                      child: Transform.rotate(
+                                        angle: -_mapController.rotation *
+                                            math.pi /
+                                            180,
+                                        child: parking.userId == widget.userId
+                                            ? _parkIconUser
+                                            : _parkIcon,
+                                      )),
+                                )),
+                            ..._activeTickets.map((ticket) => Marker(
+                                  point: LatLng(double.parse(ticket.lat),
+                                      double.parse(ticket.lng)),
+                                  width: 35,
+                                  height: 35,
+                                  builder: (context) => GestureDetector(
+                                      onTap: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return FutureBuilder<Widget>(
+                                              future: buildPopUpTicket(
+                                                  context, ticket),
+                                              builder: (BuildContext context,
+                                                  AsyncSnapshot<Widget>
+                                                      snapshot) {
+                                                if (snapshot.hasData) {
+                                                  return snapshot.data!;
+                                                } else {
+                                                  return const CircularProgressIndicator();
+                                                }
+                                              },
+                                            );
+                                          },
+                                        );
+                                      },
+                                      child: Transform.rotate(
+                                        angle: -_mapController.rotation *
+                                            math.pi /
+                                            180,
+                                        child: _carIcon,
+                                      )),
+                                ))
+                          ]
+                        : [
+                            //User
+                            Marker(
+                              point: LatLng(51.2310, 4.4137),
+                              width: 25,
+                              height: 25,
+                              builder: (context) => Transform.rotate(
+                                angle: -(_mapController.rotation - 15) *
+                                    math.pi /
+                                    180,
+                                child: _arrowIcon,
+                              ),
+                            ),
+                            ..._activeTickets.map((ticket) => Marker(
+                                  point: LatLng(double.parse(ticket.lat),
+                                      double.parse(ticket.lng)),
+                                  width: 35,
+                                  height: 35,
+                                  builder: (context) => GestureDetector(
+                                      onTap: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return FutureBuilder<Widget>(
+                                              future: buildPopUpTicket(
+                                                  context, ticket),
+                                              builder: (BuildContext context,
+                                                  AsyncSnapshot<Widget>
+                                                      snapshot) {
+                                                if (snapshot.hasData) {
+                                                  return snapshot.data!;
+                                                } else {
+                                                  return const CircularProgressIndicator();
+                                                }
+                                              },
+                                            );
+                                          },
+                                        );
+                                      },
+                                      child: Transform.rotate(
+                                        angle: -_mapController.rotation *
+                                            math.pi /
+                                            180,
+                                        child: _carIcon,
+                                      )),
+                                ))
+                          ]),
               ],
             ),
           )
@@ -944,14 +967,19 @@ class _MapPageState extends State<MapPage> {
           right: 10,
           child: TextButton(
             //TODO: fix filter logic
-            onPressed: handleFilter,
+            onPressed: () {
+              setState(() {
+                _isFiltered = !_isFiltered;
+                log('Filtered: ${_isFiltered}');
+              });
+            },
             style: ButtonStyle(
               backgroundColor: MaterialStateProperty.all<Color>(
-                isFiltered ? Colors.blue : Colors.grey,
+                _isFiltered ? Colors.blue : Colors.grey,
               ),
             ),
             child: Text(
-              isFiltered ? 'Unfilter' : 'Filter',
+              _isFiltered ? 'Unfilter' : 'Filter',
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.white,
