@@ -1,13 +1,13 @@
 class Car {
   String id;
-  String name;
+  String brand;
   String type;
   String color;
   String userId;
 
   Car({
     required this.id,
-    required this.name,
+    required this.brand,
     required this.type,
     required this.color,
     required this.userId,
@@ -16,7 +16,7 @@ class Car {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'name': name,
+      'brand': brand,
       'type': type,
       'color': color,
       'userId': userId
@@ -26,21 +26,21 @@ class Car {
   factory Car.fromMap(Map<Object?, dynamic> map) {
     return Car(
         id: map['id'],
-        name: map['name'],
+        brand: map['brand'],
         type: map['type'],
         color: map['color'],
         userId: map['userId']);
   }
   Car copyWith({
     String? id,
-    String? name,
+    String? brand,
     String? type,
     String? color,
     String? userId,
   }) {
     return Car(
       id: id ?? this.id,
-      name: name ?? this.name,
+      brand: brand ?? this.brand,
       type: type ?? this.type,
       color: color ?? this.color,
       userId: userId ?? this.userId,

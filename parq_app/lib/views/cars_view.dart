@@ -1,22 +1,25 @@
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:parq_app/functions/add_functions.dart';
+import 'package:parq_app/functions/delete_functions.dart';
+import 'package:parq_app/functions/get_functions.dart';
 import 'package:parq_app/models/car_model.dart';
-import 'package:parq_app/models/user_model.dart';
+import 'package:parq_app/models/parking_model.dart';
+import 'package:parq_app/models/ticket_model.dart';
 
 class CarPage extends StatefulWidget {
-  final Car? car;
-  final User? user;
-  const CarPage({super.key, this.user, this.car});
-
+  final String userId;
+  const CarPage({super.key, required this.userId});
   @override
   State<CarPage> createState() => _CarPageState();
 }
 
-//BottomNavBar verdwijnt bij deze pagina
 class _CarPageState extends State<CarPage> {
   List<Car> _cars = [];
+  List<Car> _carsNotInUse = [];
   final _formKey = GlobalKey<FormState>();
+
   @override
   void initState() {
     super.initState();
@@ -25,29 +28,19 @@ class _CarPageState extends State<CarPage> {
 
   //Get cars
   void _getValues() async {
-    //Connectie met Firebase
-    final snapshot = await FirebaseFirestore.instance
-        .collection('cars')
-        .where('userId', isEqualTo: widget.user?.id.toString())
-        .get();
-    //Lijst maken van alle documenten
-    List<DocumentSnapshot> documents = snapshot.docs;
-    List<Car> cars = [];
-    //Itereren over elke document en mappen in parking
-    for (var document in documents) {
-      var data = document.data();
-      cars.add(Car.fromMap(data as Map<String, dynamic>));
-    }
+    List<Car> cars = await getAllCarsOfUser(widget.userId.toString());
+    List<Car> carsNotInUse = await getAllCarsNotInUse(widget.userId.toString());
     setState(() {
       _cars = cars;
+      _carsNotInUse = carsNotInUse;
       log("Cars: ${_cars.length}");
+      log("Cars not in use: ${_carsNotInUse.length}");
     });
   }
 
   //Add car
   void _addCar(Car car) async {
-    //Gebruik bij het toevoegen bij de id van de car: 'id': FirebaseFirestore.instance.collection('car').doc().id,
-    await FirebaseFirestore.instance.collection('cars').add(car.toMap());
+    addCar(car);
     setState(() {
       _getValues();
     });
@@ -55,10 +48,9 @@ class _CarPageState extends State<CarPage> {
 
   //Add car dialog
   void _showAddCarDialog() {
-    TextEditingController nameController = TextEditingController();
+    TextEditingController brandController = TextEditingController();
     TextEditingController typeController = TextEditingController();
     TextEditingController colorController = TextEditingController();
-
     showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -71,13 +63,13 @@ class _CarPageState extends State<CarPage> {
                 child: Column(
                   children: [
                     TextFormField(
-                      controller: nameController,
+                      controller: brandController,
                       decoration: const InputDecoration(
-                        hintText: 'Name',
+                        hintText: 'Brand',
                       ),
                       validator: (value) {
                         if (value!.isEmpty) {
-                          return 'Please enter a name.';
+                          return 'Please enter a brand.';
                         }
                         return null;
                       },
@@ -121,11 +113,11 @@ class _CarPageState extends State<CarPage> {
                   child: const Text('Add'),
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
-                      String name = nameController.text.trim();
+                      String brand = brandController.text.trim();
                       String type = typeController.text.trim();
                       String color = colorController.text.trim();
 
-                      if (name.isNotEmpty &&
+                      if (brand.isNotEmpty &&
                           type.isNotEmpty &&
                           color.isNotEmpty) {
                         Car car = Car(
@@ -133,8 +125,8 @@ class _CarPageState extends State<CarPage> {
                               .collection('cars')
                               .doc()
                               .id,
-                          userId: widget.user!.id,
-                          name: name,
+                          userId: widget.userId,
+                          brand: brand,
                           type: type,
                           color: color,
                         );
@@ -158,7 +150,7 @@ class _CarPageState extends State<CarPage> {
       if (snapshot.docs.isNotEmpty) {
         final docId = snapshot.docs.first.id;
         await FirebaseFirestore.instance.collection('cars').doc(docId).update({
-          'name': car.name,
+          'brand': car.brand,
           'type': car.type,
           'color': car.color,
         });
@@ -175,8 +167,8 @@ class _CarPageState extends State<CarPage> {
 
   void _showEditCarDialog(Car car) {
     log(car.id);
-    TextEditingController nameController =
-        TextEditingController(text: car.name);
+    TextEditingController brandController =
+        TextEditingController(text: car.brand);
     TextEditingController typeController =
         TextEditingController(text: car.type);
     TextEditingController colorController =
@@ -193,13 +185,13 @@ class _CarPageState extends State<CarPage> {
                   child: Column(
                     children: [
                       TextFormField(
-                        controller: nameController,
+                        controller: brandController,
                         decoration: const InputDecoration(
-                          hintText: 'Name',
+                          hintText: 'Brand',
                         ),
                         validator: (value) {
                           if (value!.isEmpty) {
-                            return 'Please enter a name.';
+                            return 'Please enter a brand.';
                           }
                           return null;
                         },
@@ -244,17 +236,17 @@ class _CarPageState extends State<CarPage> {
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
                         //New values
-                        String newName = nameController.text.trim();
+                        String newBrand = brandController.text.trim();
                         String newType = typeController.text.trim();
                         String newColor = colorController.text.trim();
 
-                        if (newName.isNotEmpty &&
+                        if (newBrand.isNotEmpty &&
                             newType.isNotEmpty &&
                             newColor.isNotEmpty) {
                           Car updateCar = Car(
                             id: car.id,
-                            userId: widget.user!.id,
-                            name: newName,
+                            userId: widget.userId,
+                            brand: newBrand,
                             type: newType,
                             color: newColor,
                           );
@@ -269,42 +261,94 @@ class _CarPageState extends State<CarPage> {
         });
   }
 
+  void updateState() {
+    setState(() {
+      _getValues();
+    });
+  }
+
   //Delete car
   void _deleteCar(Car car) async {
-    QuerySnapshot snapshot = await FirebaseFirestore.instance
-        .collection('cars')
-        .where('id', isEqualTo: car.id)
-        .get();
-    if (snapshot.docs.isNotEmpty) {
-      await snapshot.docs.first.reference.delete();
-      setState(() {
-        _getValues();
-      });
-    }
+    deleteCar(car, updateState);
   }
 
   void _showDeleteCar(Car car) async {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Delete Car'),
-            content: Text('Are you sure you want to delete ${car.name}?'),
-            actions: [
-              TextButton(
-                child: const Text('Cancel'),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-              TextButton(
-                child: const Text('Delete'),
-                onPressed: () {
-                  _deleteCar(car);
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          );
-        });
+    bool carIsNotInUse = false;
+    for (var c in _carsNotInUse) {
+      if (car.id == c.id) {
+        carIsNotInUse = true;
+      }
+    }
+
+    carIsNotInUse
+        ? showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Delete Car'),
+                content: Text('Are you sure you want to delete ${car.brand}?'),
+                actions: [
+                  TextButton(
+                    child: const Text('Cancel'),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  TextButton(
+                    child: const Text('Delete'),
+                    onPressed: () async {
+                      List<Ticket> tickets =
+                          await getAllTicketsOfUser(widget.userId.toString());
+                      for (var t in tickets) {
+                        if (t.carId == car.id) {
+                          deleteTicket(t, () => updateState());
+                        }
+                      }
+                      _deleteCar(car);
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            })
+        : showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('This car is in use'),
+                content: Text(
+                    'Do you want to delete ${car.brand} ${car.type} and all tickets or active parking?'),
+                actions: [
+                  TextButton(
+                    child: const Text('Cancel'),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  TextButton(
+                    child: const Text('Delete'),
+                    onPressed: () async {
+                      List<Parking> parkings = await getAllParkings();
+                      Parking? parkingOfCar;
+                      for (var parking in parkings) {
+                        if (parking.carId == car.id) {
+                          parkingOfCar = parking;
+                        }
+                      }
+                      if (parkingOfCar != null) {
+                        deleteParking(parkingOfCar);
+                      }
+
+                      List<Ticket> tickets =
+                          await getAllTicketsOfUser(widget.userId.toString());
+                      for (var t in tickets) {
+                        if (t.carId == car.id) {
+                          deleteTicket(t, () => updateState());
+                        }
+                      }
+                      _deleteCar(car);
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            });
   }
 
   @override
@@ -315,7 +359,7 @@ class _CarPageState extends State<CarPage> {
           'Cars',
         ),
         leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => {Navigator.of(context).pop()},
           icon: const Icon(Icons.arrow_back),
         ),
       ),
@@ -337,9 +381,9 @@ class _CarPageState extends State<CarPage> {
                           Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(car.name),
-                              Text(car.type),
-                              Text(car.color),
+                              Text('Brand: ${car.brand}'),
+                              Text('Type: ${car.type}'),
+                              Text('Color: ${car.color}'),
                             ],
                           ),
                           Column(

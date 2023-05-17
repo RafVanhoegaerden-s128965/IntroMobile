@@ -1,13 +1,48 @@
+import 'dart:developer';
+import 'dart:ffi';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../functions/get_functions.dart';
+import '../models/user_model.dart';
 
 class EditProfileView extends StatefulWidget {
-  const EditProfileView({super.key});
+  final String? userId;
+  const EditProfileView({super.key, this.userId});
 
   @override
   State<EditProfileView> createState() => _EditProfileViewState();
 }
 
 class _EditProfileViewState extends State<EditProfileView> {
+  User? _user;
+
+  @override
+  void initState() {
+    super.initState();
+    _getUser();
+  }
+
+  Future<void> _getUser() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('id', isEqualTo: widget.userId)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        final userDoc = snapshot.docs.first;
+        final userData = userDoc.data();
+        final user = User.fromMap(userData);
+        setState(() {
+          _user = user;
+        });
+      }
+    } catch (error) {
+      // Handel eventuele fouten af
+      log('Fout bij het ophalen van de gebruikersnaam: $error');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -16,6 +51,59 @@ class _EditProfileViewState extends State<EditProfileView> {
         leading: IconButton(
           onPressed: () => Navigator.of(context).pop(),
           icon: const Icon(Icons.arrow_back),
+        ),
+      ),
+      body: SizedBox(
+        height: 150,
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Text('Username: ${_user?.username ?? ""}'),
+                      const SizedBox(
+                        width: 16,
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          // TODO: implement logic
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.blue, // Text color
+                        ),
+                        child: const Text('Change'),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Text('Username: ${_user?.email}'),
+                      const SizedBox(
+                        width: 16,
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          // TODO: implement logic
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.blue, // Text color
+                        ),
+                        child: const Text('Change'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

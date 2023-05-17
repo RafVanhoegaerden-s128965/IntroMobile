@@ -6,6 +6,7 @@ import 'package:parq_app/views/register_view.dart';
 import 'package:parq_app/views/settings_view.dart';
 import 'package:parq_app/views/ticket_view.dart';
 import 'constants/routes.dart';
+import 'constants/icons.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,8 +49,8 @@ class _HomePageState extends State<HomePage> {
 
     //BottomNavBar set routing list
     _routingOptions = [
-      const TicketPage(),
-      const MapPage(),
+      TicketPage(userId: widget.userId),
+      MapPage(userId: widget.userId),
       SettingsPage(userId: widget.userId),
     ];
   }
@@ -57,23 +58,6 @@ class _HomePageState extends State<HomePage> {
   //BottomNavBar Routing list + Index
   int _currentIndex = 1;
   List<Widget> _routingOptions = [];
-
-  //Icons
-  final _ticketIcon = Image.asset(
-    'assets/images/Ticket.png',
-    width: 45,
-    height: 45,
-  );
-  final _mapIcon = Image.asset(
-    'assets/images/Map.png',
-    width: 45,
-    height: 45,
-  );
-  final _settingsIcon = Image.asset(
-    'assets/images/Settings.png',
-    width: 45,
-    height: 45,
-  );
 
   @override
   Widget build(BuildContext context) {
@@ -93,17 +77,17 @@ class _HomePageState extends State<HomePage> {
         items: [
           //Icon ticket
           BottomNavigationBarItem(
-            icon: _ticketIcon,
+            icon: ticketIcon,
             label: 'Ticket',
           ),
           //Icon map
           BottomNavigationBarItem(
-            icon: _mapIcon,
+            icon: mapIcon,
             label: 'Map',
           ),
           //Icon settings
           BottomNavigationBarItem(
-            icon: _settingsIcon,
+            icon: settingsIcon,
             label: 'Settings',
           ),
         ],
