@@ -103,13 +103,13 @@ class _CarPageState extends State<CarPage> {
               ),
             ),
             actions: [
-              TextButton(
+              ElevatedButton(
                 child: const Text('Cancel'),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
               ),
-              TextButton(
+              ElevatedButton(
                   child: const Text('Add'),
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
