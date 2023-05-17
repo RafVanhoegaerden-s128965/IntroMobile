@@ -1,13 +1,11 @@
 import 'dart:developer';
-import 'dart:ffi';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../functions/get_functions.dart';
 import '../models/user_model.dart';
 
 class EditProfileView extends StatefulWidget {
-  final String? userId;
-  const EditProfileView({super.key, this.userId});
+  final String userId;
+  const EditProfileView({super.key, required this.userId});
 
   @override
   State<EditProfileView> createState() => _EditProfileViewState();
@@ -23,6 +21,7 @@ class _EditProfileViewState extends State<EditProfileView> {
   }
 
   Future<void> _getUser() async {
+    log(widget.userId.toString());
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('users')
@@ -65,40 +64,30 @@ class _EditProfileViewState extends State<EditProfileView> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Text('Username: ${_user?.username ?? ""}'),
+                      Text('Username: ${_user?.username}'),
                       const SizedBox(
                         width: 16,
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          // TODO: implement logic
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: Colors.blue, // Text color
-                        ),
-                        child: const Text('Change'),
                       ),
                     ],
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Text('Username: ${_user?.email}'),
+                      Text('Email: ${_user?.email}'),
                       const SizedBox(
                         width: 16,
                       ),
-                      TextButton(
-                        onPressed: () {
-                          // TODO: implement logic
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: Colors.blue, // Text color
-                        ),
-                        child: const Text('Change'),
-                      ),
                     ],
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      // TODO: implement logic
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.blue, // Text color
+                    ),
+                    child: const Text('Change'),
                   ),
                 ],
               ),

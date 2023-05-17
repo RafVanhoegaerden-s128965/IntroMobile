@@ -38,6 +38,7 @@ class _MapPageState extends State<MapPage> {
   final currentPosition = LatLng(51.2310, 4.4137);
 
   late Timer _timer;
+  bool _isDisposed = false;
   //Map rotation
   final MapController _mapController = MapController();
   //Icons
@@ -105,6 +106,7 @@ class _MapPageState extends State<MapPage> {
     String userId = widget.userId.toString();
     List<Ticket> activeTickets = await getAllActiveTicketsOfUser(userId);
     List<Parking> parkings = await getAllParkings();
+
     setState(() {
       _parkings = parkings;
       var userParkings =
@@ -367,7 +369,7 @@ class _MapPageState extends State<MapPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Start Time: $time'),
+                Text('Leaving Time: $time'),
                 Text('Parked: ${car.brand} ${car.type} ${car.color}'),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
