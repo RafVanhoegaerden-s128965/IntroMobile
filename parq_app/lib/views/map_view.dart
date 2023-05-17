@@ -38,6 +38,7 @@ class _MapPageState extends State<MapPage> {
   final currentPosition = LatLng(51.2310, 4.4137);
 
   late Timer _timer;
+  bool _isDisposed = false;
   //Map rotation
   final MapController _mapController = MapController();
   //Icons
@@ -83,46 +84,50 @@ class _MapPageState extends State<MapPage> {
     }
 
     //SetState
-    setState(() {
-      getUser();
-      _parkings = parkings;
-      log("Total Parkings: ${_parkings.length}");
-      var userParkings =
-          _parkings.where((parking) => parking.userId == widget.userId);
-      log("User Parkings: ${userParkings.length}");
-      _cars = cars;
-      log("User cars: ${_cars.length}");
-      _carsNotInUse = carsNotInUse;
-      log("User cars not in use: ${_carsNotInUse.length}");
-      _tickets = tickets;
-      log("User tickets: ${_tickets.length}");
-      _activeTickets = activeTickets;
-      log("Active user tickets: ${_activeTickets.length}");
-    });
+    if (!_isDisposed) {
+      setState(() {
+        getUser();
+        _parkings = parkings;
+        log("Total Parkings: ${_parkings.length}");
+        var userParkings =
+            _parkings.where((parking) => parking.userId == widget.userId);
+        log("User Parkings: ${userParkings.length}");
+        _cars = cars;
+        log("User cars: ${_cars.length}");
+        _carsNotInUse = carsNotInUse;
+        log("User cars not in use: ${_carsNotInUse.length}");
+        _tickets = tickets;
+        log("User tickets: ${_tickets.length}");
+        _activeTickets = activeTickets;
+        log("Active user tickets: ${_activeTickets.length}");
+      });
+    }
   }
 
   void _getMapMarkers() async {
     String userId = widget.userId.toString();
     List<Ticket> activeTickets = await getAllActiveTicketsOfUser(userId);
     List<Parking> parkings = await getAllParkings();
-    setState(() {
-      _parkings = parkings;
-      var userParkings =
-          _parkings.where((parking) => parking.userId == widget.userId);
-      _activeTickets = activeTickets;
-      // log("Auto refresh values: [ ALL PARKINGS: ${_parkings.length} ] - [ USER PARKINGS: ${userParkings.length} ] - [ ACTIVE USER TICKETS:  ${_activeTickets.length} ]");
-      //Print with colors
-      log("\x1b[36mAuto refresh values: \x1b[0m[ \x1b[32mALL PARKINGS: ${_parkings.length}\x1b[0m ] - [ \x1b[31mUSER PARKINGS: ${userParkings.length}\x1b[0m ] - [ \x1b[34mACTIVE USER TICKETS: ${_activeTickets.length}\x1b[0m ]");
+    if (!_isDisposed) {
+      setState(() {
+        _parkings = parkings;
+        var userParkings =
+            _parkings.where((parking) => parking.userId == widget.userId);
+        _activeTickets = activeTickets;
+        // log("Auto refresh values: [ ALL PARKINGS: ${_parkings.length} ] - [ USER PARKINGS: ${userParkings.length} ] - [ ACTIVE USER TICKETS:  ${_activeTickets.length} ]");
+        //Print with colors
+        log("\x1b[36mAuto refresh values: \x1b[0m[ \x1b[32mALL PARKINGS: ${_parkings.length}\x1b[0m ] - [ \x1b[31mUSER PARKINGS: ${userParkings.length}\x1b[0m ] - [ \x1b[34mACTIVE USER TICKETS: ${_activeTickets.length}\x1b[0m ]");
 
-      DateTime now = DateTime.now();
-      for (var parking in _parkings) {
-        DateTime parkingTime = parking.time.toDate();
-        if (parkingTime.isBefore(now)) {
-          deleteParking(parking);
-          _getValues();
+        DateTime now = DateTime.now();
+        for (var parking in _parkings) {
+          DateTime parkingTime = parking.time.toDate();
+          if (parkingTime.isBefore(now)) {
+            deleteParking(parking);
+            _getValues();
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   @override
@@ -143,6 +148,7 @@ class _MapPageState extends State<MapPage> {
   void dispose() {
     // cancel the timer
     _timer.cancel();
+    _isDisposed = true;
     super.dispose();
   }
 
@@ -367,7 +373,7 @@ class _MapPageState extends State<MapPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Start Time: $time'),
+                Text('Leaving Time: $time'),
                 Text('Parked: ${car.brand} ${car.type} ${car.color}'),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,

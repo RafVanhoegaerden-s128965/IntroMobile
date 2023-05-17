@@ -1,13 +1,11 @@
 import 'dart:developer';
-import 'dart:ffi';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../functions/get_functions.dart';
 import '../models/user_model.dart';
 
 class EditProfileView extends StatefulWidget {
-  final String? userId;
-  const EditProfileView({super.key, this.userId});
+  final String userId;
+  const EditProfileView({Key? key, required this.userId}) : super(key: key);
 
   @override
   State<EditProfileView> createState() => _EditProfileViewState();
@@ -16,6 +14,13 @@ class EditProfileView extends StatefulWidget {
 class _EditProfileViewState extends State<EditProfileView> {
   User? _user;
 
+  bool _isEditing = false;
+
+  final _formKey = GlobalKey<FormState>();
+
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -23,6 +28,7 @@ class _EditProfileViewState extends State<EditProfileView> {
   }
 
   Future<void> _getUser() async {
+    log(widget.userId.toString());
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('users')
@@ -36,11 +42,203 @@ class _EditProfileViewState extends State<EditProfileView> {
         setState(() {
           _user = user;
         });
+        _usernameController.text = user.username;
+        _emailController.text = user.email;
       }
     } catch (error) {
-      // Handel eventuele fouten af
-      log('Fout bij het ophalen van de gebruikersnaam: $error');
+      log('Failed to fetch username: $error');
     }
+  }
+
+  Future<void> _editUser(User user) async {
+    try {
+      final usernameSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('username', isEqualTo: user.username)
+          .get();
+      final emailSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: user.email)
+          .get();
+
+      if (usernameSnapshot.docs.isNotEmpty &&
+          user.username != _user?.username) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('A user with this username already exists'),
+          ),
+        );
+        return;
+      }
+
+      if (emailSnapshot.docs.isNotEmpty && user.email != _user?.email) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('A user with this email already exists'),
+          ),
+        );
+        return;
+      }
+
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('id', isEqualTo: widget.userId)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        final docId = snapshot.docs.first.id;
+        await FirebaseFirestore.instance.collection('users').doc(docId).update({
+          'username': user.username,
+          'email': user.email,
+        });
+        setState(() {
+          _getUser();
+          _isEditing = false;
+        });
+      } else {
+        log('User not found in the database.');
+      }
+    } catch (e) {
+      log('Failed to update user: $e');
+    }
+  }
+
+  Widget _buildUserInfo() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            const Text(
+              'Username',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text('${_user?.username}'),
+            const Text(
+              'Email',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text('${_user?.email}'),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: 400,
+              child: ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _isEditing = true;
+                  });
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.blue,
+                ),
+                child: const Text('Edit Profile'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildForm() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          const SizedBox(height: 20),
+          const Text(
+            'Username',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          TextFormField(
+            controller: _usernameController,
+            textAlign: TextAlign.center,
+            validator: (value) {
+              if (value!.isEmpty) {
+                return 'Please enter a username.';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Email',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          TextFormField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            textAlign: TextAlign.center,
+            validator: (value) {
+              if (value!.isEmpty) {
+                return 'Please enter an email address.';
+              }
+              if (!value.contains('@') || !value.contains('.')) {
+                return 'Please enter a valid email address.';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: 400,
+            child: Column(
+              children: [
+                SizedBox(
+                  width: 400,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        String newUsername = _usernameController.text.trim();
+                        String newEmail = _emailController.text.trim();
+                        if (newUsername.isNotEmpty && newEmail.isNotEmpty) {
+                          User user = User(
+                            id: widget.userId,
+                            email: newEmail,
+                            username: newUsername,
+                            avgRating: _user!.avgRating,
+                            numRatings: _user!.numRatings,
+                            totalRating: _user!.totalRating,
+                            password: _user!.password,
+                          );
+                          _editUser(user);
+                        } else {
+                          log('Please enter values for all fields.');
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Save Changes'),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: 400,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _isEditing = false;
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -54,57 +252,9 @@ class _EditProfileViewState extends State<EditProfileView> {
         ),
       ),
       body: SizedBox(
-        height: 150,
-        child: Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Text('Username: ${_user?.username ?? ""}'),
-                      const SizedBox(
-                        width: 16,
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          // TODO: implement logic
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: Colors.blue, // Text color
-                        ),
-                        child: const Text('Change'),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Text('Username: ${_user?.email}'),
-                      const SizedBox(
-                        width: 16,
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          // TODO: implement logic
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: Colors.blue, // Text color
-                        ),
-                        child: const Text('Change'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+        height: 300,
+        width: 550,
+        child: _isEditing ? _buildForm() : _buildUserInfo(),
       ),
     );
   }

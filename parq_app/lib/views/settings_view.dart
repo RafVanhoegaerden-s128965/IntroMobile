@@ -90,7 +90,9 @@ class _SettingsPageState extends State<SettingsPage> {
                 // Navigeer naar een andere pagina
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const EditProfileView(),
+                    builder: (context) => EditProfileView(
+                      userId: _user!.id.toString(),
+                    ),
                   ),
                 );
               },
