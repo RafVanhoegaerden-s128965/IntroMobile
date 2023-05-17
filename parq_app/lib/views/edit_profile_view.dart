@@ -65,7 +65,7 @@ class _EditProfileViewState extends State<EditProfileView> {
           user.username != _user?.username) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Een gebruiker met dezelfde username bestaat al.'),
+            content: Text('A user with this username already exists'),
           ),
         );
         return;
@@ -74,7 +74,7 @@ class _EditProfileViewState extends State<EditProfileView> {
       if (emailSnapshot.docs.isNotEmpty && user.email != _user?.email) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Een gebruiker met dezelfde e-mailadres bestaat al.'),
+            content: Text('A user with this email already exists'),
           ),
         );
         return;
@@ -253,7 +253,7 @@ class _EditProfileViewState extends State<EditProfileView> {
       ),
       body: SizedBox(
         height: 300,
-        width: 500,
+        width: 550,
         child: _isEditing ? _buildForm() : _buildUserInfo(),
       ),
     );

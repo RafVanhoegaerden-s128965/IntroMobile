@@ -39,13 +39,13 @@ class _RegisterViewState extends State<RegisterView> {
       if (existingUserWithEmail.docs.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Een gebruiker met dezelfde e-mailadres bestaat al.'),
+            content: Text('A user with this username already exists'),
           ),
         );
       } else if (existingUserWithUsername.docs.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Een gebruiker met dezelfde username bestaat al.'),
+            content: Text('A user with this email already exists'),
           ),
         );
       } else {
