@@ -252,107 +252,6 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
-  //Rate-Popup -- TODO: finish method
-  Future<void> showRatePopup(BuildContext context, Parking parking) async {
-    final _ratingController = TextEditingController();
-    User user = await getUserWithId(parking.userId);
-
-    // Use a new context from the parent widget
-    BuildContext dialogContext;
-    // ignore: use_build_context_synchronously
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        dialogContext = context;
-        return AlertDialog(
-          title: const Text('Rate'),
-          content: SizedBox(
-            height: 100,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('User: ${user.username}'),
-                const Text('Rate this user on a scale of 1/5:'),
-                TextFormField(
-                  controller: _ratingController,
-                  decoration: const InputDecoration(labelText: 'Rating'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value!.isEmpty) {
-                      return 'Please enter a rating.';
-                    }
-                    if (value != '1' &&
-                        value != '2' &&
-                        value != '3' &&
-                        value != '4' &&
-                        value != '5') {
-                      return 'Please enter a valid rating';
-                    }
-                    return null;
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            ElevatedButton(
-              child: const Text('Close'),
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
-            ),
-            ElevatedButton(
-              child: const Text('Rate'),
-              onPressed: () async {
-                String ratingStr = _ratingController.text;
-                int rating = int.parse(ratingStr);
-                await rateUser(user.id, rating);
-                Navigator.of(dialogContext).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> rateUser(String userId, int rating) async {
-    User user = await getUserWithId(userId);
-
-    final numRatings = user.numRatings;
-    final totalRating = user.totalRating;
-    final newNumRatings = numRatings + 1;
-    final newTotalRating = totalRating + rating;
-    final newAvgRating = newTotalRating / newNumRatings;
-    // TODO: Implement rating logic, e.g. save rating to database
-    try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .where('id', isEqualTo: userId)
-          .get();
-      if (snapshot.docs.isNotEmpty) {
-        final docId = snapshot.docs.first.id;
-
-        await FirebaseFirestore.instance.collection('users').doc(docId).update({
-          'numRatings': newNumRatings,
-          'totalRating': newTotalRating,
-          'avgRating': newAvgRating
-        });
-        setState(() {
-          _getValues();
-          log('numRatings: ${user.numRatings}');
-          log('avgRating: ${user.avgRating}');
-          log('totalRating: ${user.totalRating}');
-        });
-      } else {
-        log('User not found in database.');
-      }
-    } catch (e) {
-      log('Failed to update rating: $e');
-    }
-  }
-
   Future<Widget> buildPopUpGreenParking(
       BuildContext context, Parking parking) async {
     //Time variables
@@ -424,19 +323,18 @@ class _MapPageState extends State<MapPage> {
                             double.parse(parking.lat),
                             double.parse(parking.lng));
                         Ticket ticket = Ticket(
-                          id: parking.id,
-                          userId: widget.userId.toString(),
-                          carId: selectedCar!.id,
-                          lat: parking.lat,
-                          lng: parking.lng,
-                          street: streetName,
-                          time: Timestamp.now(),
-                          active: "true",
-                        );
+                            id: parking.id,
+                            userId: widget.userId.toString(),
+                            carId: selectedCar!.id,
+                            lat: parking.lat,
+                            lng: parking.lng,
+                            street: streetName,
+                            time: Timestamp.now(),
+                            active: "true",
+                            previousUserIs: parking.userId);
                         addTicket(ticket);
                         deleteParking(parking);
                         Navigator.of(context).pop();
-                        await showRatePopup(context, parking);
                       }
                     },
                   )
@@ -609,7 +507,8 @@ class _MapPageState extends State<MapPage> {
   }
 
   Future<void> buildPopUpRedEdit(Parking parking, Car car) async {
-    DateTime selectedTime = parking.time.toDate();
+    DateTime timeData = parking.time.toDate();
+    String selectedTime = "${timeData.hour}:${timeData.minute}";
     bool isSaveEnabled = false;
 
     showDialog<void>(
@@ -645,7 +544,7 @@ class _MapPageState extends State<MapPage> {
                                         child: CupertinoDatePicker(
                                           mode: CupertinoDatePickerMode
                                               .dateAndTime,
-                                          initialDateTime: selectedTime,
+                                          initialDateTime: timeData,
                                           minimumDate: DateTime.now()
                                               .add(const Duration(minutes: 1)),
                                           onDateTimeChanged:
@@ -656,7 +555,7 @@ class _MapPageState extends State<MapPage> {
                                                       const Duration(
                                                           minutes: 2)));
                                               if (isSaveEnabled) {
-                                                selectedTime = newDateTime;
+                                                timeData = newDateTime;
                                               }
                                             });
                                           },
@@ -675,7 +574,7 @@ class _MapPageState extends State<MapPage> {
                             );
                           },
                           child: Text(
-                            '$selectedTime',
+                            selectedTime,
                             style: const TextStyle(
                               decoration: TextDecoration.underline,
                               color: Colors.blue,
@@ -708,8 +607,7 @@ class _MapPageState extends State<MapPage> {
                   onPressed: isSaveEnabled
                       ? () {
                           setState(() {
-                            _editParking(
-                                parking, Timestamp.fromDate(selectedTime));
+                            _editParking(parking, Timestamp.fromDate(timeData));
                             _getValues();
                           });
                           Navigator.of(context).pop();
