@@ -221,7 +221,8 @@ class _MapPageState extends State<MapPage> {
 
   Future<Widget> buildPopUpTicket(BuildContext context, Ticket ticket) async {
     DateTime timeData = ticket.time.toDate();
-    String time = "${timeData.hour}:${timeData.minute}";
+    String time =
+        "${timeData.hour}:${timeData.minute.toString().padLeft(2, '0')} ${timeData.day}/${timeData.month}";
     Car car = await getCarWithId(ticket.carId);
     return AlertDialog(
       title: const Text('Ticket details'),

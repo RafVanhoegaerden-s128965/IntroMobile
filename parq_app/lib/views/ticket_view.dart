@@ -56,7 +56,8 @@ class _TicketPageState extends State<TicketPage> {
   Future<Widget> buildTicketInfoWidget(Ticket ticket) async {
     Car car = await getCarWithId(ticket.carId);
     DateTime timeData = ticket.time.toDate();
-    String ticketTime = "${timeData.hour}:${timeData.minute}";
+    String ticketTime =
+        "${timeData.hour}:${timeData.minute.toString().padLeft(2, '0')} ${timeData.day}/${timeData.month}";
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
