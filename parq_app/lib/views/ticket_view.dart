@@ -10,7 +10,8 @@ import '../models/user_model.dart';
 
 class TicketPage extends StatefulWidget {
   final String? userId;
-  const TicketPage({super.key, this.userId});
+  bool? alreadyRated;
+  TicketPage({super.key, this.userId, this.alreadyRated});
 
   @override
   State<TicketPage> createState() => _TicketPageState();
@@ -82,7 +83,6 @@ class _TicketPageState extends State<TicketPage> {
     final newNumRatings = numRatings + 1;
     final newTotalRating = totalRating + rating;
     final newAvgRating = newTotalRating / newNumRatings;
-    // TODO: Implement rating logic, e.g. save rating to database
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('users')
@@ -162,14 +162,17 @@ class _TicketPageState extends State<TicketPage> {
               },
             ),
             ElevatedButton(
-              child: const Text('Rate'),
               onPressed: () async {
+                setState(() {
+                  widget.alreadyRated = true;
+                });
                 String ratingStr = ratingController.text;
                 int rating = int.parse(ratingStr);
                 log(user.id);
                 await rateUser(user.id, rating);
                 Navigator.of(dialogContext).pop();
               },
+              child: const Text('Rate'),
             ),
           ],
         );
@@ -237,7 +240,7 @@ class _TicketPageState extends State<TicketPage> {
                       Card(
                         child: SizedBox(
                           height: 150,
-                          width: 400,
+                          width: 500,
                           child: Row(
                             children: [
                               Expanded(
@@ -270,13 +273,41 @@ class _TicketPageState extends State<TicketPage> {
                                       width: 100,
                                       child: ElevatedButton(
                                         onPressed: () async {
-                                          await showRatePopup(context, ticket);
+                                          if (widget.alreadyRated == false) {
+                                            await showRatePopup(
+                                                context, ticket);
+                                          } else {
+                                            showDialog(
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                return AlertDialog(
+                                                  content: Column(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .center,
+                                                    children: const [
+                                                      Text(
+                                                        'User already rated',
+                                                        style: TextStyle(
+                                                            fontSize: 25,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            );
+                                          }
                                         },
                                         child: const Text(
                                           'Rate user',
                                         ),
                                       ),
-                                    ),
+                                    )
                                 ],
                               ),
                               const SizedBox(

@@ -49,7 +49,10 @@ class _HomePageState extends State<HomePage> {
 
     //BottomNavBar set routing list
     _routingOptions = [
-      TicketPage(userId: widget.userId),
+      TicketPage(
+        userId: widget.userId,
+        alreadyRated: false!,
+      ),
       MapPage(userId: widget.userId),
       SettingsPage(userId: widget.userId),
     ];
