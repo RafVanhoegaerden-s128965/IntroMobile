@@ -76,7 +76,6 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
 
         setState(() {
           _getUser();
-          _isEditing = !_isEditing;
         });
       } else {
         log('User not found in the database.');
