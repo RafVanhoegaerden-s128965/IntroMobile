@@ -103,12 +103,14 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
             textAlign: TextAlign.center,
             validator: (value) {
               if (value!.isEmpty) {
-                return 'Please enter a new password.';
+                return 'Please enter a password.';
+              }
+              if (value != _confirmPasswordController.text) {
+                return 'Passwords do not match.';
               }
               return null;
             },
           ),
-          const SizedBox(height: 20),
           const Text(
             'Confirm password',
             style: TextStyle(fontWeight: FontWeight.bold),
@@ -119,7 +121,7 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
             textAlign: TextAlign.center,
             validator: (value) {
               if (value!.isEmpty) {
-                return 'Please enter the same password.';
+                return 'Please enter a password.';
               }
               if (value != _passwordController.text) {
                 return 'Passwords do not match.';
@@ -127,7 +129,6 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
               return null;
             },
           ),
-          const SizedBox(height: 20),
           SizedBox(
             width: 400,
             child: Column(
@@ -198,7 +199,7 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
       ),
       body: SizedBox(
         height: 300,
-        width: 550,
+        width: 500,
         child: _buildForm(),
       ),
     );
