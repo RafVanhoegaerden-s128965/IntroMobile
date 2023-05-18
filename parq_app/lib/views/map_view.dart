@@ -417,13 +417,20 @@ class _MapPageState extends State<MapPage> {
                       )
                     : TextButton(
                         onPressed: () {
-                          Navigator.of(context).push(
+                          Navigator.of(context).pop();
+                          Navigator.of(context)
+                              .push(
                             MaterialPageRoute(
                               builder: (context) => CarPage(
                                 userId: _user!.id,
                               ),
                             ),
-                          );
+                          )
+                              .then((_) async {
+                            _carsNotInUse = await getAllCarsNotInUse(
+                                widget.userId.toString());
+                            buildPopUpRedParking(position, lat, lng);
+                          });
                         },
                         child: const Text('Add car'),
                       ),
