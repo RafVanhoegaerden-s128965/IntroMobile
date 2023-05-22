@@ -1,5 +1,5 @@
 # IntroMobile - ParQ - Groep 6
-### GitWiki
-+ Planning
-+ Styling
-+ WireFrames - Figma
+
+## Namen
+Bayram Capa
+Raf Vanhoegaerden
