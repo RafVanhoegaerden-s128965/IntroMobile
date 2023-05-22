@@ -9,17 +9,18 @@ class Ticket {
   String street;
   Timestamp time;
   String active;
+  String previousUserIs;
 
-  Ticket({
-    required this.id,
-    required this.carId,
-    required this.userId,
-    required this.lat,
-    required this.lng,
-    required this.time,
-    required this.street,
-    required this.active,
-  });
+  Ticket(
+      {required this.id,
+      required this.carId,
+      required this.userId,
+      required this.lat,
+      required this.lng,
+      required this.time,
+      required this.street,
+      required this.active,
+      required this.previousUserIs});
 
   Map<String, dynamic> toMap() {
     return {
@@ -31,19 +32,20 @@ class Ticket {
       'time': time,
       'street': street,
       'active': active,
+      'previousUserId': previousUserIs
     };
   }
 
   factory Ticket.fromMap(Map<Object?, dynamic> map) {
     return Ticket(
-      id: map['id'],
-      userId: map['userId'],
-      carId: map['carId'],
-      lat: map['lat'],
-      lng: map['lng'],
-      time: map['time'],
-      street: map['street'],
-      active: map['active'],
-    );
+        id: map['id'],
+        userId: map['userId'],
+        carId: map['carId'],
+        lat: map['lat'],
+        lng: map['lng'],
+        time: map['time'],
+        street: map['street'],
+        active: map['active'],
+        previousUserIs: map['previousUserId']);
   }
 }
