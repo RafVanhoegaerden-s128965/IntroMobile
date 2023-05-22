@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:parq_app/constants/routes.dart';
@@ -25,6 +24,7 @@ class _SettingsPageState extends State<SettingsPage> {
     _getUser();
   }
 
+  // Get user
   Future<void> _getUser() async {
     try {
       final snapshot = await FirebaseFirestore.instance
