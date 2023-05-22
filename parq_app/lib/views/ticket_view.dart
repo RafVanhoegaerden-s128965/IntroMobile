@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:parq_app/functions/delete_functions.dart';
 import 'package:parq_app/functions/get_functions.dart';
 import '../models/car_model.dart';
-import '../models/parking_model.dart';
 import '../models/ticket_model.dart';
 import '../models/user_model.dart';
 
@@ -18,10 +17,24 @@ class TicketPage extends StatefulWidget {
 }
 
 class _TicketPageState extends State<TicketPage> {
+  // Ticket lists
   List<Ticket> _tickets = [];
   List<Ticket> _activeTickets = [];
 
+  // Sets tickets in list inactive
   bool active = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _getValues();
+  }
+
+  void updateState() {
+    setState(() {
+      _getValues();
+    });
+  }
 
   void _getValues() async {
     List<Ticket> activeTickets =
@@ -43,17 +56,12 @@ class _TicketPageState extends State<TicketPage> {
     });
   }
 
-  void updateState() {
-    setState(() {
-      _getValues();
-    });
-  }
-
-  //Delete ticket
+  // Delete ticket
   void _deleteTicket(Ticket ticket) async {
     deleteTicket(ticket, updateState);
   }
 
+  // Ticket popup
   Future<Widget> buildTicketInfoWidget(Ticket ticket) async {
     Car car = await getCarWithId(ticket.carId);
     DateTime timeData = ticket.time.toDate();
@@ -69,12 +77,7 @@ class _TicketPageState extends State<TicketPage> {
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _getValues();
-  }
-
+  // Rate user
   Future<void> rateUser(String userId, int rating) async {
     User user = await getUserWithId(userId);
 
@@ -110,7 +113,7 @@ class _TicketPageState extends State<TicketPage> {
     }
   }
 
-  //Rate-Popup
+  // Rate popup
   Future<void> showRatePopup(BuildContext context, Ticket ticket) async {
     final ratingController = TextEditingController();
 

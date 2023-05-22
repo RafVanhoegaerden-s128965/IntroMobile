@@ -1,10 +1,8 @@
 import 'dart:convert';
 import 'dart:developer';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
-
 import '../models/user_model.dart';
 
 class ChangePasswordView extends StatefulWidget {
@@ -19,13 +17,15 @@ class ChangePasswordView extends StatefulWidget {
 class _ChangePasswordViewState extends State<ChangePasswordView> {
   User? _user;
 
-  bool _isEditing = false;
-
   final _formKey = GlobalKey<FormState>();
 
+  // Input fields
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
+
+  // Sets if editting active
+  bool _isEditing = false;
 
   @override
   void initState() {
@@ -33,6 +33,7 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
     _getUser();
   }
 
+  // Get user
   Future<void> _getUser() async {
     log(widget.userId.toString());
     try {
@@ -56,6 +57,7 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
     }
   }
 
+  // Edit user
   Future<void> _editUser(User user) async {
     try {
       final snapshot = await FirebaseFirestore.instance

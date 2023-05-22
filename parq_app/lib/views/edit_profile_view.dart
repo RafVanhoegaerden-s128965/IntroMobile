@@ -14,12 +14,14 @@ class EditProfileView extends StatefulWidget {
 class _EditProfileViewState extends State<EditProfileView> {
   User? _user;
 
-  bool _isEditing = false;
-
   final _formKey = GlobalKey<FormState>();
 
+  // Input fields
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+
+  // Sets if editting active
+  bool _isEditing = false;
 
   @override
   void initState() {
@@ -27,6 +29,7 @@ class _EditProfileViewState extends State<EditProfileView> {
     _getUser();
   }
 
+  // Get user
   Future<void> _getUser() async {
     log(widget.userId.toString());
     try {
@@ -50,6 +53,7 @@ class _EditProfileViewState extends State<EditProfileView> {
     }
   }
 
+  // Edit user
   Future<void> _editUser(User user) async {
     try {
       final usernameSnapshot = await FirebaseFirestore.instance

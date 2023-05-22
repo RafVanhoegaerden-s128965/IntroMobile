@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
@@ -15,12 +14,15 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
+  late User _loggedInUser;
+
   final _formKey = GlobalKey<FormState>();
+
+  // Input fields
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  late User _loggedInUser;
-
+  // Login
   Future<void> _login() async {
     final email = _emailController.text;
     final password = _passwordController.text;

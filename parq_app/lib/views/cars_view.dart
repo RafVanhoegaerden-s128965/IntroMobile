@@ -16,14 +16,22 @@ class CarPage extends StatefulWidget {
 }
 
 class _CarPageState extends State<CarPage> {
+  final _formKey = GlobalKey<FormState>();
+
+  // Car lists
   List<Car> _cars = [];
   List<Car> _carsNotInUse = [];
-  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
     _getValues();
+  }
+
+  void updateState() {
+    setState(() {
+      _getValues();
+    });
   }
 
   //Get cars
@@ -46,7 +54,6 @@ class _CarPageState extends State<CarPage> {
     });
   }
 
-  //Add car dialog
   void _showAddCarDialog() {
     TextEditingController brandController = TextEditingController();
     TextEditingController typeController = TextEditingController();
@@ -259,12 +266,6 @@ class _CarPageState extends State<CarPage> {
                     }),
               ]);
         });
-  }
-
-  void updateState() {
-    setState(() {
-      _getValues();
-    });
   }
 
   //Delete car

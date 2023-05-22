@@ -9,13 +9,11 @@ import 'package:latlong2/latlong.dart';
 import 'package:parq_app/functions/add_functions.dart';
 import 'package:parq_app/functions/delete_functions.dart';
 import 'package:parq_app/functions/get_functions.dart';
-import 'package:parq_app/main.dart';
 import '../models/car_model.dart';
 import '../models/parking_model.dart';
 import '../models/ticket_model.dart';
 import '../models/user_model.dart';
 import 'cars_view.dart';
-import 'package:intl/intl.dart';
 
 class MapPage extends StatefulWidget {
   final String? userId;
@@ -34,24 +32,56 @@ class _MapPageState extends State<MapPage> {
   // Sets filtered markers on map active
   bool _isFiltered = false;
 
+  // Sets after dispose active
+  bool _isDisposed = false;
+
   // Position
   final currentPosition = LatLng(51.2310, 4.4137);
 
-  late Timer _timer;
-  bool _isDisposed = false;
   //Map rotation
   final MapController _mapController = MapController();
-  //Icons
+
+  // Timer
+  late Timer _timer;
+
+  // Icons
   final _arrowIcon = Image.asset('assets/images/Arrow.png');
   final _parkIcon = Image.asset('assets/images/ParkSpace.png');
   final _carIcon = Image.asset('assets/images/Car.png');
   final _parkIconUser = Image.asset('assets/images/ParkSpaceUser.png');
-  //Markers list
+
+  // Parking list
   List<Parking> _parkings = [];
+
+  // Car lists
   List<Car> _cars = [];
   List<Car> _carsNotInUse = [];
+
+  // Ticket lists
   List<Ticket> _tickets = [];
   List<Ticket> _activeTickets = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _getValues();
+    _timer = Timer.periodic(const Duration(seconds: 1), (Timer t) {
+      if (mounted) {
+        _getMapMarkers();
+      } else {
+        // cancel the timer
+        _timer.cancel();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // cancel the timer
+    _timer.cancel();
+    _isDisposed = true;
+    super.dispose();
+  }
 
   void _getValues() async {
     String userId = widget.userId.toString();
@@ -130,28 +160,7 @@ class _MapPageState extends State<MapPage> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _getValues();
-    _timer = Timer.periodic(const Duration(seconds: 1), (Timer t) {
-      if (mounted) {
-        _getMapMarkers();
-      } else {
-        // cancel the timer
-        _timer.cancel();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    // cancel the timer
-    _timer.cancel();
-    _isDisposed = true;
-    super.dispose();
-  }
-
+  // Ticket popups
   Future<void> showSetTimePopUpTicket(
       BuildContext context, Car car, Ticket ticket) async {
     DateTime selectedTime = DateTime.now();
@@ -253,6 +262,7 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
+  // Parking popups
   Future<Widget> buildPopUpGreenParking(
       BuildContext context, Parking parking) async {
     //Time variables
@@ -635,6 +645,7 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
+  // Edit parking
   Future<void> _editParking(Parking parking, Timestamp time) async {
     try {
       final snapshot = await FirebaseFirestore.instance

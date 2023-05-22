@@ -42,25 +42,24 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  //BottomNavBar Routing list + Index
+  int _currentIndex = 1;
+  List<Widget> _routingOptions = [];
+
   @override
   void initState() {
     super.initState();
-    //_getValues();
 
     //BottomNavBar set routing list
     _routingOptions = [
       TicketPage(
         userId: widget.userId,
-        alreadyRated: false!,
+        alreadyRated: false,
       ),
       MapPage(userId: widget.userId),
       SettingsPage(userId: widget.userId),
     ];
   }
-
-  //BottomNavBar Routing list + Index
-  int _currentIndex = 1;
-  List<Widget> _routingOptions = [];
 
   @override
   Widget build(BuildContext context) {
