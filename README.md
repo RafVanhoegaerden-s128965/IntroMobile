@@ -1,5 +1,5 @@
 # IntroMobile - ParQ - Groep 6
 
 ## Namen
-Bayram Capa - [ ]
+Bayram Capa </br>
 Raf Vanhoegaerden
