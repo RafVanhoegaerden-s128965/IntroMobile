@@ -32,8 +32,8 @@ class User {
         id: map['id'],
         password: map['password'],
         username: map['username'],
-        numRatings: map['numRatings'],
-        avgRating: map['avgRating'],
-        totalRating: map['totalRating']);
+        numRatings: map['numRatings'] ?? 0,
+        avgRating: map['avgRating'] ?? 0,
+        totalRating: map['totalRating'] ?? 0);
   }
 }
