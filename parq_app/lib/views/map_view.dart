@@ -885,31 +885,31 @@ class _MapPageState extends State<MapPage> {
             },
           ),
         ),
-        Positioned(
-          top: 130,
-          right: 10,
-          child: TextButton(
-            //TODO: fix filter logic
-            onPressed: () {
-              setState(() {
-                _isFiltered = !_isFiltered;
-                log('Filtered: ${_isFiltered}');
-              });
-            },
-            style: ButtonStyle(
-              backgroundColor: MaterialStateProperty.all<Color>(
-                _isFiltered ? Colors.blue : Colors.grey,
+        if (_activeTickets.isNotEmpty)
+          Positioned(
+            top: 130,
+            right: 10,
+            child: TextButton(
+              onPressed: () {
+                setState(() {
+                  _isFiltered = !_isFiltered;
+                  log('Filtered: $_isFiltered');
+                });
+              },
+              style: ButtonStyle(
+                backgroundColor: MaterialStateProperty.all<Color>(
+                  _isFiltered ? Colors.blue : Colors.grey,
+                ),
               ),
-            ),
-            child: Text(
-              _isFiltered ? 'Unfilter' : 'Filter',
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.white,
+              child: Text(
+                _isFiltered ? 'Unfilter' : 'Filter',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
-        ),
       ]),
     );
   }
