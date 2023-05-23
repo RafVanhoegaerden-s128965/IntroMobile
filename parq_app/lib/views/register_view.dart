@@ -42,13 +42,13 @@ class _RegisterViewState extends State<RegisterView> {
       if (existingUserWithEmail.docs.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('A user with this username already exists'),
+            content: Text('A user with this email already exists'),
           ),
         );
       } else if (existingUserWithUsername.docs.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('A user with this email already exists'),
+            content: Text('A user with this username already exists'),
           ),
         );
       } else {
@@ -130,8 +130,17 @@ class _RegisterViewState extends State<RegisterView> {
                 TextFormField(
                     controller: _confirmPasswordController,
                     obscureText: true,
+                    validator: (value) {
+                      if (value!.isEmpty) {
+                        return 'Please enter a password.';
+                      } else if (value != _passwordController.text) {
+                        return 'Passwords do not match.';
+                      }
+                      return null;
+                    },
                     decoration:
                         const InputDecoration(labelText: 'Confirm Password')),
+
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: _register,
