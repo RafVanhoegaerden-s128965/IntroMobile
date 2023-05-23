@@ -110,13 +110,13 @@ class _CarPageState extends State<CarPage> {
               ),
             ),
             actions: [
-              ElevatedButton(
+              TextButton(
                 child: const Text('Cancel'),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
               ),
-              ElevatedButton(
+              TextButton(
                   child: const Text('Add'),
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
@@ -373,44 +373,48 @@ class _CarPageState extends State<CarPage> {
               return Column(
                 children: [
                   Card(
-                    child: SizedBox(
-                      height: 150,
-                      width: 400,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text('Brand: ${car.brand}'),
-                              Text('Type: ${car.type}'),
-                              Text('Color: ${car.color}'),
-                            ],
-                          ),
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              IconButton(
-                                onPressed: () {
-                                  _showEditCarDialog(car);
-                                },
-                                icon: const Icon(
-                                  Icons.edit,
-                                  color: Colors.blue,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: SizedBox(
+                        height: 100,
+                        width: 400,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Brand: ${car.brand}'),
+                                Text('Type: ${car.type}'),
+                                Text('Color: ${car.color}'),
+                              ],
+                            ),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                IconButton(
+                                  onPressed: () {
+                                    _showEditCarDialog(car);
+                                  },
+                                  icon: const Icon(
+                                    Icons.edit,
+                                    color: Colors.blue,
+                                  ),
                                 ),
-                              ),
-                              IconButton(
-                                onPressed: () {
-                                  _showDeleteCar(car);
-                                },
-                                icon: const Icon(
-                                  Icons.delete,
-                                  color: Colors.red,
-                                ),
-                              )
-                            ],
-                          )
-                        ],
+                                IconButton(
+                                  onPressed: () {
+                                    _showDeleteCar(car);
+                                  },
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
+                                )
+                              ],
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   ),

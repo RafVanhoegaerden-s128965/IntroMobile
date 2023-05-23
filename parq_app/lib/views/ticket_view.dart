@@ -68,11 +68,15 @@ class _TicketPageState extends State<TicketPage> {
     String ticketTime =
         "${timeData.hour}:${timeData.minute.toString().padLeft(2, '0')} ${timeData.day}/${timeData.month}";
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(ticketTime),
         Text(ticket.street),
-        Text('${car.brand} ${car.type}'),
+        Text(
+          '${car.brand} ${car.type}',
+          style: const TextStyle(fontWeight: FontWeight.w900),
+        ),
       ],
     );
   }
@@ -158,13 +162,13 @@ class _TicketPageState extends State<TicketPage> {
             ),
           ),
           actions: <Widget>[
-            ElevatedButton(
+            TextButton(
               child: const Text('Close'),
               onPressed: () {
                 Navigator.of(dialogContext).pop();
               },
             ),
-            ElevatedButton(
+            TextButton(
               onPressed: () async {
                 setState(() {
                   widget.alreadyRated = true;
@@ -241,40 +245,41 @@ class _TicketPageState extends State<TicketPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Card(
-                        child: SizedBox(
-                          height: 150,
-                          width: 500,
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: FutureBuilder<Widget>(
-                                  future: buildTicketInfoWidget(ticket),
-                                  builder: (BuildContext context,
-                                      AsyncSnapshot<Widget> snapshot) {
-                                    if (snapshot.hasData) {
-                                      return snapshot.data!;
-                                    } else {
-                                      return const CircularProgressIndicator();
-                                    }
-                                  },
-                                ),
-                              ),
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  IconButton(
-                                    onPressed: () {
-                                      _deleteTicket(ticket);
+                        child: Padding(
+                          padding: const EdgeInsets.all(20.0),
+                          child: SizedBox(
+                            height: 100,
+                            width: 400,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: FutureBuilder<Widget>(
+                                    future: buildTicketInfoWidget(ticket),
+                                    builder: (BuildContext context,
+                                        AsyncSnapshot<Widget> snapshot) {
+                                      if (snapshot.hasData) {
+                                        return snapshot.data!;
+                                      } else {
+                                        return const CircularProgressIndicator();
+                                      }
                                     },
-                                    icon: const Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
-                                    ),
                                   ),
-                                  if (ticket.previousUserIs != widget.userId)
-                                    SizedBox(
-                                      width: 100,
-                                      child: ElevatedButton(
+                                ),
+                                const Spacer(),
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    IconButton(
+                                      onPressed: () {
+                                        _deleteTicket(ticket);
+                                      },
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                    if (ticket.previousUserIs != widget.userId)
+                                      IconButton(
                                         onPressed: () async {
                                           if (widget.alreadyRated == false) {
                                             await showRatePopup(
@@ -294,10 +299,10 @@ class _TicketPageState extends State<TicketPage> {
                                                       Text(
                                                         'User already rated',
                                                         style: TextStyle(
-                                                            fontSize: 25,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
+                                                          fontSize: 25,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
                                                       ),
                                                     ],
                                                   ),
@@ -306,22 +311,20 @@ class _TicketPageState extends State<TicketPage> {
                                             );
                                           }
                                         },
-                                        child: const Text(
-                                          'Rate user',
+                                        icon: const Icon(
+                                          Icons.star,
+                                          color: Colors.yellow,
                                         ),
                                       ),
-                                    )
-                                ],
-                              ),
-                              const SizedBox(
-                                width: 60,
-                              )
-                            ],
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                       if (index < tickets.length - 1)
-                        const Divider(thickness: 2)
+                        const Divider(thickness: 2),
                     ],
                   );
                 },
