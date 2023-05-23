@@ -263,8 +263,7 @@ class _MapPageState extends State<MapPage> {
   }
 
   // Parking popups
-  Future<Widget> buildPopUpGreenParking(
-      BuildContext context, Parking parking) async {
+  Future<Widget> buildPopUpGreenParking(Parking parking) async {
     //Time variables
     DateTime timeData = parking.time.toDate();
     String time = "${timeData.hour}:${timeData.minute}";
@@ -352,14 +351,20 @@ class _MapPageState extends State<MapPage> {
                 : TextButton(
                     child: const Text('Add car'),
                     onPressed: () {
-                      // Navigeer naar car page
-                      Navigator.of(context).push(
+                      Navigator.of(context).pop();
+                      Navigator.of(context)
+                          .push(
                         MaterialPageRoute(
                           builder: (context) => CarPage(
                             userId: _user!.id,
                           ),
                         ),
-                      );
+                      )
+                          .then((_) async {
+                        _carsNotInUse =
+                            await getAllCarsNotInUse(widget.userId.toString());
+                        buildPopUpGreenParking(parking);
+                      });
                     },
                   ),
           ],
@@ -740,7 +745,7 @@ class _MapPageState extends State<MapPage> {
                                                         Widget>(
                                                       future:
                                                           buildPopUpGreenParking(
-                                                              context, parking),
+                                                              parking),
                                                       builder: (BuildContext
                                                               context,
                                                           AsyncSnapshot<Widget>
