@@ -126,7 +126,7 @@ class _EditProfileViewState extends State<EditProfileView> {
             Text('${_user?.email}'),
             const SizedBox(height: 20),
             SizedBox(
-              width: 400,
+              width: 390,
               child: ElevatedButton(
                 onPressed: () {
                   setState(() {
@@ -188,7 +188,7 @@ class _EditProfileViewState extends State<EditProfileView> {
           ),
           const SizedBox(height: 20),
           SizedBox(
-            width: 400,
+            width: 390,
             child: Column(
               children: [
                 SizedBox(
